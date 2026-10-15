@@ -130,3 +130,10 @@ cd ~/Desktop/garage_bot && source venv/bin/activate && python3 bot.py
 ## Безопасность
 
 Токен бота и service_role ключ Supabase раньше светились в переписке. Их нужно перевыпустить (@BotFather → `/revoke`; Supabase → Settings → API) и обновить `.env`. Если ещё не сделано — напомни.
+
+## Проверка без Telegram
+
+`tests/harness.py` — стенд: фейковая сессия Telegram + **настоящая база**. Клиент с id 900000001 «пишет» и «жмёт кнопки», все ответы бота печатаются. `tests/t_all.py` — прогон основных сценариев (поиск → бронь → подтверждение → отмена → архив). После прогона обязательно `tests/cleanup.py` (удаляет заявки клиента 900000001 и объекты с названием на «ТЕСТ»). Перед прогоном t_all нужен объект «ТЕСТ…» в Марьино — или поправить шаги.
+```bash
+cd ~/Desktop/garage_bot && source venv/bin/activate && python3 tests/t_all.py; python3 tests/cleanup.py
+```

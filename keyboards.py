@@ -121,7 +121,9 @@ def search_districts(districts: List[str], selected: Iterable[str], counts: Dict
     selected = set(selected)
     kb = InlineKeyboardBuilder()
     for i, name in enumerate(districts):
-        label = f"✓ {name}" if name in selected else f"{name} · {counts.get(name, 0)}"
+        if name not in selected and not counts.get(name):
+            continue
+        label = f"✓ {name}" if name in selected else f"{name} · {counts[name]}"
         kb.add(_btn(label, SearchCb(action="district", value=str(i))))
     kb.adjust(2)
     rows = kb.export()
@@ -172,7 +174,7 @@ def booking_dates(days: List[date], free: Dict[date, int]) -> InlineKeyboardMark
         if hours:
             kb.add(_btn(f"{name} · {hours} ч", BookCb(action="date", value=day.isoformat())))
         else:
-            kb.add(_btn(f"{name} · занято", Noop(hint="day")))
+            kb.add(_btn(f"{name} · {'недоступно' if i == 0 else 'занято'}", Noop(hint="day")))
     kb.adjust(2)
     return kb.as_markup()
 

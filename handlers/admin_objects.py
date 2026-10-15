@@ -300,7 +300,7 @@ async def on_add(callback: CallbackQuery, callback_data: AddCb, state: FSMContex
         await state.update_data(draft=draft)
         await answer_quietly(callback)
         label = dict(kb.EDIT_CHOICES[key]).get(callback_data.value, "")
-        await edit_or_send(callback.message, f"{callback.message.html_text}\n→ <b>{label}</b>")
+        await edit_or_send(callback.message, f"{t.add_step(field, add_steps(draft))}\n→ <b>{label}</b>")
         await ask_next(callback.message, state, field)
         return
 

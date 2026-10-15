@@ -49,7 +49,7 @@ async def tick(bot: Bot) -> None:
         await db.mark_booking(b["id"], "visit_reminded")
         g = await db.garage(b["garage_id"]) or {}
         start, end = parse_dt(b["start_time"]), parse_dt(b["end_time"])
-        await _send(bot, b["client_telegram_id"], t.visit_reminder(g, start, end), kb.after_confirm(g))
+        await _send(bot, b["client_telegram_id"], t.visit_reminder(g, start, end, current.date()), kb.after_confirm(g))
 
 
 async def run(bot: Bot) -> None:

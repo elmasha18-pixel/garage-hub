@@ -69,7 +69,7 @@ def screen(s: dict):
 
 # ─── Вход в поиск ───────────────────────────────────────────
 
-async def start_search(message: Message, state: FSMContext) -> None:
+async def start_search(message: Message, state: FSMContext, edit: bool = False) -> None:
     garages = await db.garages(active=True)
     if not garages:
         await message.answer(t.EMPTY_CATALOG)
@@ -78,7 +78,10 @@ async def start_search(message: Message, state: FSMContext) -> None:
     s = {"filters": {}, "step": "type", "garages": garages, "districts": districts}
     await state.update_data(search=s)
     text, markup = screen(s)
-    await message.answer(text, reply_markup=markup)
+    if edit:
+        await edit_or_send(message, text, markup)
+    else:
+        await message.answer(text, reply_markup=markup)
 
 
 @router.callback_query(SearchCb.filter())
@@ -86,7 +89,7 @@ async def on_search(callback: CallbackQuery, callback_data: SearchCb, state: FSM
     action, value = callback_data.action, callback_data.value
     if action == "start":
         await answer_quietly(callback)
-        await start_search(callback.message, state)
+        await start_search(callback.message, state, edit=True)
         return
 
     data = await state.get_data()
@@ -155,7 +158,7 @@ async def go_next(callback: CallbackQuery, state: FSMContext, s: dict) -> None:
     await answer_quietly(callback)
     steps = steps_for(s)
     index = steps.index(s["step"]) if s["step"] in steps else 0
-    if index + 1 >= len(steps):
+    if index + 1 >= len(steps) or not matching(s["garages"], s["filters"]):
         await show_results(callback.message, state, s)
         return
     s["step"] = steps[index + 1]

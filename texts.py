@@ -311,7 +311,7 @@ def slots_screen(g: dict, day: date, selected: List[int], price: float) -> str:
         ]
     else:
         lines += [
-            "Нажмите на час начала, затем на час окончания —",
+            "Нажмите на первый и последний час —",
             "всё между ними выберется само.",
         ]
     lines += ["", "<i>✕ — занято или уже прошло</i>"]
@@ -367,12 +367,13 @@ def rejected_for_client(booking_id, name: str, start: datetime, end: datetime, r
     )
 
 
-def visit_reminder(g: dict, start: datetime, end: datetime) -> str:
+def visit_reminder(g: dict, start: datetime, end: datetime, today: date) -> str:
+    when = {0: "Сегодня", 1: "Завтра"}.get((start.date() - today).days, day_long(start.date()).capitalize())
     return (
         f"<b>Скоро ваш визит</b>\n"
         f"{DIVIDER}\n"
         f"<b>{h(g.get('name') or '')}</b>\n"
-        f"Сегодня · {time_span(start, end)}\n"
+        f"{when} · {time_span(start, end)}\n"
         f"Адрес: {location(g)}\n\n"
         "Ждём вас. Если планы изменились — отмените заявку в «Мои заявки»."
     )
@@ -612,7 +613,12 @@ EDIT_PROMPTS = {
 
 
 def edit_prompt(field: str, current) -> str:
-    shown = h(clip(str(current), 300)) if current not in (None, "") else "—"
+    if current in (None, ""):
+        shown = "—"
+    elif field == "price_per_hour":
+        shown = money(current)
+    else:
+        shown = h(clip(str(current), 300))
     return f"<b>{EDIT_PROMPTS[field]}</b>\nСейчас: {shown}\n\nОтправьте новое значение:"
 
 

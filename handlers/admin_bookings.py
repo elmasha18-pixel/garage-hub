@@ -143,10 +143,13 @@ async def on_decide(callback: CallbackQuery, callback_data: DecideCb, state: FSM
         return
 
     if action == "no":
+        b = await db.booking(bid)
+        if not b or b["status"] != "pending":
+            await already_decided(callback, bid)
+            return
         await answer_quietly(callback)
-        await callback.message.edit_text(
-            f"{callback.message.html_text}\n\n<b>{t.REJECT_ASK}</b>", reply_markup=kb.reject_reasons(bid),
-        )
+        await edit_or_send(callback.message, f"{await booking_card(b)}\n\n<b>{t.REJECT_ASK}</b>",
+                           kb.reject_reasons(bid))
         return
 
     if action == "back":
@@ -216,6 +219,7 @@ async def show_leads(message: Message) -> None:
 
 @router.callback_query(LeadCb.filter(F.action == "done"))
 async def on_lead_done(callback: CallbackQuery, callback_data: LeadCb):
-    await db.close_owner_request(callback_data.request_id)
+    closed = await db.close_owner_request(callback_data.request_id)
     await answer_quietly(callback, "Отмечено")
-    await edit_or_send(callback.message, f"{callback.message.html_text}\n{t.DIVIDER}\n✓ Обработано")
+    body = t.owner_lead(closed) if closed else callback.message.html_text
+    await edit_or_send(callback.message, f"{body}\n{t.DIVIDER}\n✓ Обработано")

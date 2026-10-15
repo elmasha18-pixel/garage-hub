@@ -46,7 +46,7 @@ def build_dispatcher() -> Dispatcher:
     return dp
 
 
-_last_error_report = 0.0
+_last_error_report = None
 
 
 async def on_error(event: ErrorEvent) -> bool:
@@ -75,7 +75,7 @@ async def on_error(event: ErrorEvent) -> bool:
     except Exception:
         pass
 
-    if message and time.monotonic() - _last_error_report > 60:
+    if message and (_last_error_report is None or time.monotonic() - _last_error_report > 60):
         _last_error_report = time.monotonic()
         try:
             await message.bot.send_message(ADMIN_ID, t.error_for_admin(where, error))
