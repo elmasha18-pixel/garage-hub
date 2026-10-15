@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16181d"/><stop offset="1" stop-color="#0c0d10"/>
+    </linearGradient>
+    <linearGradient id="door" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2e36"/><stop offset="1" stop-color="#1b1e24"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <!-- гаражная дверь -->
+  <g transform="translate(780,130)">
+    <path d="M0 120 L190 20 L380 120 L380 420 L0 420 Z" fill="none" stroke="#3a3f4a" stroke-width="6"/>
+    <rect x="40" y="150" width="300" height="270" fill="url(#door)"/>
+    <g stroke="#3a3f4a" stroke-width="4">
+      <line x1="40" y1="195" x2="340" y2="195"/><line x1="40" y1="240" x2="340" y2="240"/>
+      <line x1="40" y1="285" x2="340" y2="285"/><line x1="40" y1="330" x2="340" y2="330"/>
+      <line x1="40" y1="375" x2="340" y2="375"/>
+    </g>
+    <rect x="40" y="380" width="300" height="40" fill="#f5a524" opacity="0.9"/>
+    <circle cx="190" cy="85" r="10" fill="#f5a524"/>
+  </g>
+  <text x="408" y="270" text-anchor="end" font-family="HelveticaNeue-Bold" font-size="96" fill="#f2f3f5">Garage</text><text x="410" y="270" font-family="HelveticaNeue-Bold" font-size="96" fill="#f5a524">Hub</text>
+  <rect x="100" y="305" width="80" height="6" fill="#f5a524"/>
+  <text x="98" y="375" font-family="Helvetica Neue, Helvetica, Arial" font-size="36" fill="#a9aeb8">Почасовая аренда боксов</text>
+  <text x="98" y="422" font-family="Helvetica Neue, Helvetica, Arial" font-size="36" fill="#a9aeb8">Москва и область</text>
+  <text x="98" y="530" font-family="Helvetica Neue, Helvetica, Arial" font-size="26" fill="#6c727e" letter-spacing="3">РЕМОНТ · ДЕТЕЙЛИНГ · ПО ЧАСАМ</text>
+</svg>

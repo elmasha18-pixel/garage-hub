@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 from supabase import create_client
-from zoneinfo import ZoneInfo
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -21,8 +23,19 @@ if not SUPABASE_KEY:
     raise RuntimeError("SUPABASE_SECRET_KEY не найден в .env")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 LOCAL_TZ = ZoneInfo("Europe/Moscow")
-OPEN_HOUR = 9
-CLOSE_HOUR = 22
+ASSETS_DIR = BASE_DIR / "assets"
+LOGS_DIR = BASE_DIR / "logs"
+
+# Часы бронирования по умолчанию (если у объекта не распознаны свои)
+DEFAULT_OPEN_HOUR = 9
+DEFAULT_CLOSE_HOUR = 22
 BOOKING_WINDOW_DAYS = 7
 MAX_PHOTOS = 5
+
+# Напоминания (в минутах)
+ADMIN_REMIND_AFTER_MIN = 15      # заявка висит без ответа → напомнить админу
+CLIENT_WAIT_NOTICE_MIN = 60      # клиенту: «заявка ещё на согласовании»
+VISIT_REMIND_BEFORE_MIN = 120    # клиенту: «через 2 часа ждём вас»
+REMINDER_INTERVAL_SEC = 60
