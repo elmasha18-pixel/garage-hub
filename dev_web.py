@@ -13,10 +13,19 @@ from api.server import start_web
 from config import TOKEN
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s")
+log = logging.getLogger("dev_web")
+
+
+class QuietBot(Bot):
+    """Бот, который НЕ отправляет сообщения (только пишет в лог) — чтобы тесты не слали уведомления в настоящий Telegram.
+    Скачивание фото работает как обычно."""
+
+    async def send_message(self, chat_id, text, **kwargs):
+        log.info("[не отправлено] → %s: %s", chat_id, str(text).replace("\n", " | ")[:140])
 
 
 async def main():
-    bot = Bot(TOKEN)
+    bot = QuietBot(TOKEN)
     runner = await start_web(bot)
     try:
         await asyncio.Event().wait()

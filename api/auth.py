@@ -72,10 +72,13 @@ def dev_user(header: str, request: web.Request) -> Optional[User]:
     """«dev <id>» — вход без Telegram для разработки. Работает только при MINIAPP_DEV=1 и только локально."""
     if not MINIAPP_DEV or not _is_local_request(request):
         return None
-    try:
-        user_id = int(header.split(None, 1)[1].strip())
-    except (IndexError, ValueError):
-        return None
+    alias = header.split(None, 1)[1].strip() if " " in header else ""
+    user_id = {"admin": ADMIN_ID, "client": 900000001}.get(alias)
+    if user_id is None:
+        try:
+            user_id = int(alias)
+        except ValueError:
+            return None
     return User(user_id, "Эльман" if user_id == ADMIN_ID else "Тест", "", "dev_user", dev=True)
 
 

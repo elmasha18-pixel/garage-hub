@@ -125,9 +125,29 @@ async def main():
         r = await c.get("/api/admin/leads", headers=dev(ADMIN)); leads = (await r.json())["leads"]
         check("заявка владельца видна админу", any(x["address"].startswith("Химки") for x in leads))
 
-        print("Статика")
-        r = await c.get("/"); check("главная страница", r.status in (200, 404))
+        print("Статика и безопасность")
+        r = await c.get("/"); page = await r.text()
+        check("главная страница", r.status == 200 and "GarageHub" in page)
+        check("защитные заголовки на странице", "script-src 'self' https://telegram.org" in r.headers.get("Content-Security-Policy", ""))
+        for path, kind in [("/css/tokens.css", "css"), ("/js/main.js", "javascript"), ("/assets/favicon.svg", "svg")]:
+            r = await c.get(path); check(f"файл {path}", r.status == 200 and kind in r.headers.get("Content-Type", ""), r.status)
+        for evil in ["/../.env", "/%2e%2e/.env", "/js/../../.env", "/..%2f.env", "/js/%2e%2e/%2e%2e/.env", "/.env", "/../config.py"]:
+            r = await c.get(evil); text = await r.text()
+            check(f"нет доступа к секретам: {evil}", "TELEGRAM_BOT_TOKEN" not in text and "SUPABASE" not in text and r.status != 200, r.status)
         r = await c.get("/api/health"); check("health", r.status == 200)
+        r = await c.get("/api/health"); check("API без кеширования", r.headers.get("Cache-Control") == "no-store")
+
+        print("Фото")
+        with_photo = [g for g in await db.garages(active=True) if g.get("photos")]
+        if with_photo:
+            fid = with_photo[0]["photos"][0]
+            r = await c.get(f"/api/photo/{fid}")
+            body = await r.read()
+            check("фото отдаётся", r.status == 200 and r.headers.get("Content-Type", "").startswith("image/") and len(body) > 1000, r.status)
+            check("фото кешируется надолго", "immutable" in r.headers.get("Cache-Control", ""))
+            r = await c.get(f"/api/photo/{fid}"); check("повторный запрос из кеша", r.status == 200)
+        else:
+            print("  (нет объектов с фото — пропущено)")
     await db.update_garage(gid, {"is_active": False})
     print("\nИТОГ:", "всё прошло" if not fails else f"упало {len(fails)}: {fails}")
     sys.exit(1 if fails else 0)

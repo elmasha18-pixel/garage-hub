@@ -2,8 +2,9 @@ import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import httpx
 from dotenv import load_dotenv
-from supabase import create_client
+from supabase import ClientOptions, create_client
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
@@ -22,7 +23,14 @@ if not SUPABASE_URL:
 if not SUPABASE_KEY:
     raise RuntimeError("SUPABASE_SECRET_KEY не найден в .env")
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Запросы к базе идут из разных потоков одновременно. Общее HTTP/2-соединение для этого не рассчитано
+# (случайные ReadError под нагрузкой), поэтому берём HTTP/1.1 с пулом соединений.
+_http = httpx.Client(
+    http2=False,
+    timeout=httpx.Timeout(15.0, connect=10.0),
+    limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=ClientOptions(httpx_client=_http))
 
 LOCAL_TZ = ZoneInfo("Europe/Moscow")
 ASSETS_DIR = BASE_DIR / "assets"

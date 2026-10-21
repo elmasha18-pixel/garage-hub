@@ -9,11 +9,14 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault, ErrorEvent
+from aiogram.types import (
+    BotCommand, BotCommandScopeChat, BotCommandScopeDefault, ErrorEvent, MenuButtonWebApp, WebAppInfo,
+)
 
 import reminders
 import texts as t
-from config import ADMIN_ID, LOGS_DIR, TOKEN, supabase
+from api.server import start_web
+from config import ADMIN_ID, LOGS_DIR, TOKEN, WEB_PORT, WEBAPP_URL, supabase
 from handlers import admin_bookings, admin_objects, booking, common, owners, search
 
 log = logging.getLogger("garagehub")
@@ -101,8 +104,12 @@ async def setup_commands(bot: Bot) -> None:
         BotCommand(command="find", description="Найти бокс"),
         BotCommand(command="my", description="Мои заявки"),
         BotCommand(command="contacts", description="Контакты"),
-    ]
+    ] + ([BotCommand(command="app", description="Открыть приложение")] if WEBAPP_URL else [])
     await bot.set_my_commands(common_commands, scope=BotCommandScopeDefault())
+    if WEBAPP_URL:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(text="Открыть", web_app=WebAppInfo(url=WEBAPP_URL + "/")),
+        )
     await bot.set_my_commands(
         common_commands + [
             BotCommand(command="admin", description="Панель управления"),
@@ -123,11 +130,18 @@ async def main() -> None:
     me = await bot.get_me()
     await setup_commands(bot)
     reminder_task = asyncio.create_task(reminders.run(bot))
-    log.info("GarageHub запущен: @%s", me.username)
+    web_runner = None
+    try:
+        web_runner = await start_web(bot)
+    except OSError as e:
+        log.warning("Веб-часть Mini App не запущена (порт %s занят?): %s", WEB_PORT, e)
+    log.info("GarageHub запущен: @%s%s", me.username, f" · приложение: {WEBAPP_URL}" if WEBAPP_URL else "")
     try:
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     finally:
         reminder_task.cancel()
+        if web_runner:
+            await web_runner.cleanup()
         await bot.session.close()
         log.info("GarageHub остановлен")
 

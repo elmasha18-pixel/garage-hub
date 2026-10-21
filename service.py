@@ -61,6 +61,22 @@ def free_by_day(g: dict, blocked: Dict[date, set]) -> Dict[date, int]:
     return {day: (close_h - open_h) - len(hours) for day, hours in blocked.items()}
 
 
+async def today_status(garages: List[dict]) -> Dict[int, dict]:
+    """Для каталога: сколько часов свободно сегодня и с какого времени."""
+    today = now().date()
+    rows = await db.busy_for_garages((g["id"] for g in garages), at_hour(today, 0), at_hour(today, 24))
+    by_garage: Dict[int, List[dict]] = {}
+    for b in rows:
+        by_garage.setdefault(b["garage_id"], []).append(b)
+    result = {}
+    for g in garages:
+        open_h, close_h = garage_hours(g)
+        blocked = busy_hours(by_garage.get(g["id"], []), today, open_h, close_h) | past_hours(today, open_h, close_h)
+        free = [h for h in range(open_h, close_h) if h not in blocked]
+        result[g["id"]] = {"free_today": len(free), "next_free": free[0] if free else None}
+    return result
+
+
 # ─── Создание заявки ────────────────────────────────────────
 
 def check_hours(g: dict, hours: List[int]) -> List[int]:

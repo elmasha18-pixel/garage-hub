@@ -136,7 +136,8 @@ async def me(request: web.Request) -> web.Response:
 
 async def garages_list(request: web.Request) -> web.Response:
     rows = await db.garages(active=True)
-    return ok({"garages": [ser.garage_public(g) for g in rows]})
+    today = await service.today_status(rows)
+    return ok({"garages": [ser.garage_public(g, today.get(g["id"])) for g in rows]})
 
 
 async def garage_detail(request: web.Request) -> web.Response:

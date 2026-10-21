@@ -147,6 +147,15 @@ START = (
 )
 
 
+APP_HINT = (
+    "\n\n<b>Приложение</b>\n"
+    "Кнопка «Открыть» слева от поля ввода — тот же поиск и бронирование в удобном виде: "
+    "фото, расписание, избранное."
+)
+
+APP_OPEN = "Откройте приложение — поиск, расписание и бронирование в удобном виде."
+
+
 def admin_dashboard(active: int, archived: int, pending: int, today: int, leads: int) -> str:
     def row(label: str, value: str) -> str:
         return f"{label}: <b>{value}</b>"

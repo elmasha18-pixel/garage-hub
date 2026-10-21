@@ -9,17 +9,23 @@ import service
 from utils import garage_hours, now, parse_dt
 
 
+def pretty(value: str) -> str:
+    """Район пишут как попало («выхино», «МАРЬИНО»): приводим к виду «Выхино»."""
+    value = (value or "").strip()
+    return value[:1].upper() + value[1:] if value.islower() else value
+
+
 def photo_url(file_id: str) -> str:
     return f"/api/photo/{file_id}"
 
 
-def garage_public(g: dict) -> dict:
+def garage_public(g: dict, today: Optional[dict] = None) -> dict:
     open_h, close_h = garage_hours(g)
-    return {
+    data = {
         "id": g["id"],
         "type": g.get("type") or "garage",
         "name": g.get("name") or "",
-        "district": (g.get("district") or "").strip(),
+        "district": pretty(g.get("district")),
         "address": (g.get("address") or "").strip(),
         "price": float(g.get("price_per_hour") or 0),
         "has_lift": bool(g.get("has_lift")),
@@ -32,6 +38,9 @@ def garage_public(g: dict) -> dict:
         "close_hour": close_h,
         "photos": [photo_url(p) for p in (g.get("photos") or [])],
     }
+    if today is not None:
+        data.update(today)
+    return data
 
 
 def garage_admin(g: dict, upcoming: int = 0) -> dict:
@@ -63,7 +72,7 @@ def _garage_brief(g: Optional[dict]) -> dict:
     return {
         "id": g.get("id"),
         "name": g.get("name") or "Площадка недоступна",
-        "district": (g.get("district") or "").strip(),
+        "district": pretty(g.get("district")),
         "address": (g.get("address") or "").strip(),
         "photo": photo_url(photos[0]) if photos else None,
         "type": g.get("type") or "garage",

@@ -86,6 +86,21 @@ async def busy_bookings(garage_id, start: datetime, end: datetime) -> List[dict]
     )
 
 
+async def busy_for_garages(ids: Iterable, start: datetime, end: datetime) -> List[dict]:
+    """Активные брони нескольких объектов за интервал — одним запросом."""
+    ids = sorted({int(i) for i in ids})
+    if not ids:
+        return []
+    return await _run(
+        _bookings()
+        .select("garage_id, start_time, end_time")
+        .in_("garage_id", ids)
+        .in_("status", ACTIVE_STATUSES)
+        .lt("start_time", _ts(end))
+        .gt("end_time", _ts(start))
+    )
+
+
 async def create_booking(data: dict) -> Optional[dict]:
     return _first(await _run(_bookings().insert(data)))
 
