@@ -5,11 +5,10 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-import db
 import keyboards as kb
+import service
 import texts as t
 from callbacks import OwnerCb
-from config import ADMIN_ID
 from states import OwnerRequest
 from utils import answer_quietly, reset
 
@@ -60,22 +59,9 @@ async def owner_address(message: Message, state: FSMContext):
     data = (await state.get_data()).get("owner", {})
     await reset(state)
     user = message.from_user
-    lead = {
-        "name": data.get("name"),
-        "phone": data.get("phone"),
-        "object_type": data.get("object_type"),
-        "address": message.text.strip(),
-        "telegram_id": user.id,
-        "telegram_username": t.username_label(user.username, user.id),
-    }
-    saved = None
-    try:
-        saved = await db.create_owner_request(lead)
-    except Exception:
-        log.exception("Не удалось сохранить заявку владельца")
     await message.answer(t.OWNER_DONE, reply_markup=kb.home_markup(user.id))
-    await message.bot.send_message(
-        ADMIN_ID,
-        t.owner_lead(saved or {**lead, "id": "—"}),
-        reply_markup=kb.lead_actions(saved["id"]) if saved else None,
+    await service.create_owner_request(
+        message.bot, user.id, user.username, data.get("name") or "", data.get("phone") or "",
+        "garage" if data.get("object_type") == t.object_type("garage") else "detailing",
+        message.text.strip(),
     )

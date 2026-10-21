@@ -8,6 +8,7 @@ from aiogram.types import CallbackQuery, Message
 
 import db
 import keyboards as kb
+import service
 import texts as t
 from callbacks import DayCb, DecideCb, LeadCb
 from states import Reject
@@ -78,36 +79,12 @@ async def on_day(callback: CallbackQuery, callback_data: DayCb):
 
 # ─── Решение по заявке ──────────────────────────────────────
 
-async def notify_client(callback_or_message, chat_id: int, text: str, markup=None) -> bool:
-    try:
-        await callback_or_message.bot.send_message(chat_id, text, reply_markup=markup)
-        return True
-    except Exception as e:
-        log.warning("Не удалось написать клиенту %s: %s", chat_id, e)
-        return False
-
-
 async def already_decided(callback: CallbackQuery, booking_id: int) -> None:
     b = await db.booking(booking_id)
     status = t.status_line(b["status"]) if b else "не найдена"
     await answer_quietly(callback, t.ALREADY_DECIDED.format(status=status), alert=True)
     if b:
         await edit_or_send(callback.message, await booking_card(b))
-
-
-async def reject(bot_holder, booking_id: int, reason: str):
-    """Отклоняет заявку и пишет клиенту. Возвращает заявку или None, если она уже обработана."""
-    b = await db.change_booking_status(booking_id, "rejected", ["pending"], comment=reason)
-    if not b:
-        return None
-    g = await db.garage(b["garage_id"]) or {}
-    start, end = booking_times(b)
-    await notify_client(
-        bot_holder, b["client_telegram_id"],
-        t.rejected_for_client(b["id"], g.get("name") or "", start, end, reason),
-        kb.after_reject(),
-    )
-    return b
 
 
 @router.callback_query(DecideCb.filter())
@@ -125,17 +102,11 @@ async def on_decide(callback: CallbackQuery, callback_data: DecideCb, state: FSM
 
     if action == "ok":
         async with user_lock(callback.from_user.id):
-            b = await db.change_booking_status(bid, "confirmed", ["pending"])
-        if not b:
+            result = await service.confirm_booking(callback.bot, bid)
+        if not result:
             await already_decided(callback, bid)
             return
-        g = await db.garage(b["garage_id"]) or {}
-        start, end = booking_times(b)
-        delivered = await notify_client(
-            callback, b["client_telegram_id"],
-            t.confirmed_for_client(b["id"], g, start, end, b["total_price"]),
-            kb.after_confirm(g),
-        )
+        b, g, delivered = result
         await answer_quietly(callback, "Подтверждено. Клиент уведомлён." if delivered else "Подтверждено")
         await edit_or_send(callback.message, await booking_card(b, g))
         if not delivered:
@@ -173,12 +144,12 @@ async def on_decide(callback: CallbackQuery, callback_data: DecideCb, state: FSM
             return
         reason = t.REJECT_REASONS.get(callback_data.reason, "Без указания причины")
         async with user_lock(callback.from_user.id):
-            b = await reject(callback, bid, reason)
-        if not b:
+            result = await service.reject_booking(callback.bot, bid, reason)
+        if not result:
             await already_decided(callback, bid)
             return
         await answer_quietly(callback, "Отклонено. Клиент уведомлён.")
-        await edit_or_send(callback.message, await booking_card(b))
+        await edit_or_send(callback.message, await booking_card(result[0], result[1]))
 
 
 @router.message(Reject.reason, F.text)
@@ -187,14 +158,14 @@ async def on_reject_reason(message: Message, state: FSMContext):
     await reset(state)
     if not data:
         return
-    b = await reject(message, data["booking_id"], message.text.strip())
-    if not b:
+    result = await service.reject_booking(message.bot, data["booking_id"], message.text.strip())
+    if not result:
         await message.answer("Эта заявка уже обработана.", reply_markup=kb.admin_menu())
         return
     await message.answer("Заявка отклонена, клиент уведомлён.", reply_markup=kb.admin_menu())
     try:
         await message.bot.edit_message_text(
-            await booking_card(b), chat_id=data["chat_id"], message_id=data["message_id"],
+            await booking_card(result[0], result[1]), chat_id=data["chat_id"], message_id=data["message_id"],
         )
     except Exception:
         pass
