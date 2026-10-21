@@ -55,8 +55,17 @@ def now() -> datetime:
     return datetime.now(LOCAL_TZ)
 
 
+_FRACTION = re.compile(r"\.(\d+)")
+_SHORT_OFFSET = re.compile(r"([+-]\d{2})$")
+
+
 def parse_dt(value: str) -> datetime:
-    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    """Время из базы → Москва. Python 3.9 понимает дробные секунды только из 3 или 6 цифр,
+    а Postgres отбрасывает нули на конце («.17434»), поэтому дополняем до 6."""
+    value = value.strip().replace("Z", "+00:00").replace(" ", "T", 1)
+    value = _FRACTION.sub(lambda m: "." + m.group(1)[:6].ljust(6, "0"), value, count=1)
+    value = _SHORT_OFFSET.sub(r"\1:00", value)
+    dt = datetime.fromisoformat(value)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=LOCAL_TZ)
     return dt.astimezone(LOCAL_TZ)
