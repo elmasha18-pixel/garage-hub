@@ -22,5 +22,8 @@
 ## Движение
 150–250 мс, `cubic-bezier(0.16, 1, 0.3, 1)`. Только как ответ на действие: переход между экранами (сдвиг по направлению), шторка, нажатие (scale .98), появление галочки «готово». Анимация экрана — `fill-mode: backwards` (иначе fixed-панели внутри «уезжают»). `prefers-reduced-motion`: убираем сдвиги, оставляем смену прозрачности.
 
+## Отступы
+Утилиты `.mt-*` стоят в самом конце `components.css`. В компонентах не писать `margin: 0 …` сокращённо, если у элемента может быть `.mt-*` — только `margin-left/right`: иначе отступ сверху затирается (так слипались переключатель и чипы).
+
 ## Компоненты (`css/components.css`)
 `.btn` (primary/secondary/plain/danger, `.l`, `.block`, `.is-loading`), `.icon-btn`, `.fav`, `.search`, `.chips/.chip`, `.segmented` (`.compact`), `.grid/.listing/.photo`, `.status`, `.props`, `.daybar`, `.dates/.date`, `.slots/.slot`, `.steps`, `.done-mark`, `.rows/.item/.thumb`, `.req`, `.empty`, `.hint`, `.alert`, `.sheet/.option/.check/.radio`, `.toast`, `.faq`, `.tabbar`, `.cta-bar`, `.header`, `.toolbar`.

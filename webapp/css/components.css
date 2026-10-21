@@ -61,7 +61,8 @@
 
 .chips {
   display: flex; gap: var(--gap-s); overflow-x: auto; scrollbar-width: none;
-  margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter);
+  /* только боковые поля: верхний отступ задаёт .mt-* */
+  margin-left: calc(var(--gutter) * -1); margin-right: calc(var(--gutter) * -1); padding: 0 var(--gutter);
 }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
@@ -187,7 +188,7 @@ textarea.input { height: auto; min-height: 88px; padding: 12px 14px; resize: non
 
 .toolbar {
   position: sticky; top: 0; z-index: 20;
-  margin: 0 calc(var(--gutter) * -1); padding: var(--gap-s) var(--gutter);
+  margin-left: calc(var(--gutter) * -1); margin-right: calc(var(--gutter) * -1); padding: var(--gap-s) var(--gutter);
   background: var(--bg); border-bottom: 1px solid transparent;
   transition: border-color var(--t-fast);
 }
@@ -237,7 +238,7 @@ textarea.input { height: auto; min-height: 88px; padding: 12px 14px; resize: non
 
 /* ── Бронирование: даты и часы ───────────────────────────── */
 
-.dates { display: flex; gap: var(--gap-s); overflow-x: auto; scrollbar-width: none; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); scroll-padding-inline: var(--gutter); }
+.dates { display: flex; gap: var(--gap-s); overflow-x: auto; scrollbar-width: none; margin-left: calc(var(--gutter) * -1); margin-right: calc(var(--gutter) * -1); padding: 0 var(--gutter); scroll-padding-inline: var(--gutter); }
 .dates::-webkit-scrollbar { display: none; }
 .date {
   flex: none; width: 60px; padding: 8px 0; border-radius: var(--r-control);
@@ -375,3 +376,11 @@ textarea.input { height: auto; min-height: 88px; padding: 12px 14px; resize: non
 .faq .a { display: none; padding: 0 0 14px; color: var(--text-2); line-height: 1.5; max-width: 60ch; }
 .faq .qa.is-open .a { display: block; }
 .faq .qa.is-open .q svg { transform: rotate(180deg); }
+
+/* Утилиты — в самом конце, чтобы их не перебивали стили компонентов с равной специфичностью */
+.mt-xs { margin-top: var(--gap-xs); }
+.mt-s { margin-top: var(--gap-s); }
+.mt-m { margin-top: var(--gap-m); }
+.mt-l { margin-top: var(--gap-l); }
+.mt-xl { margin-top: var(--gap-xl); }
+.unit { font-size: var(--fs-13); font-weight: 400; color: var(--text-2); letter-spacing: 0; }

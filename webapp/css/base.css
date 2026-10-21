@@ -103,11 +103,3 @@ button, [data-action] { -webkit-user-select: none; user-select: none; }
   .press:active, .btn:active, .chip:active, .slot:active, .date:active { transform: none !important; }
   .skeleton { animation: none; }
 }
-
-/* Отступы сверху — вместо разрозненных inline-стилей в экранах */
-.mt-xs { margin-top: var(--gap-xs); }
-.mt-s { margin-top: var(--gap-s); }
-.mt-m { margin-top: var(--gap-m); }
-.mt-l { margin-top: var(--gap-l); }
-.mt-xl { margin-top: var(--gap-xl); }
-.unit { font-size: var(--fs-13); font-weight: 400; color: var(--text-2); letter-spacing: 0; }
