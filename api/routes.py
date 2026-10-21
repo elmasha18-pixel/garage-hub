@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import date, timedelta
 from typing import Any, Dict
@@ -18,6 +19,14 @@ from core.utils import at_hour, now, parse_dt
 log = logging.getLogger(__name__)
 
 PUBLIC_PREFIXES = ("/api/health", "/api/photo/")
+# Каталог открыт без входа — для будущего сайта и поисковиков. Только чтение и только публичные поля
+# (serializers.garage_public без контактов владельца). Брони, «мои заявки» и админка — только со входом.
+PUBLIC_CATALOG = re.compile(r"^/api/garages(/\d+(/availability)?)?$")
+
+
+def is_public(request: web.Request) -> bool:
+    path = request.path
+    return path.startswith(PUBLIC_PREFIXES) or (request.method == "GET" and bool(PUBLIC_CATALOG.match(path)))
 
 
 def dumps(data) -> str:
@@ -51,7 +60,7 @@ async def errors_middleware(request: web.Request, handler):
 @web.middleware
 async def auth_middleware(request: web.Request, handler):
     path = request.path
-    if path.startswith("/api/") and not path.startswith(PUBLIC_PREFIXES):
+    if path.startswith("/api/") and not is_public(request):
         user = authenticate(request)
         if not user:
             return error_response("unauthorized", "Откройте приложение через Telegram.", 401)

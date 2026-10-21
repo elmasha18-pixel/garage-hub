@@ -46,7 +46,12 @@ async def main():
     async with TestClient(TestServer(app)) as c:
         dev = lambda uid: {"Authorization": f"dev {uid}"}
         print("Вход и права")
-        r = await c.get("/api/garages"); check("без входа → 401", r.status == 401)
+        r = await c.get("/api/garages"); check("каталог открыт без входа (для сайта)", r.status == 200)
+        r = await c.get("/api/garages"); check("в открытом каталоге нет контактов владельца", "СЕКРЕТ" not in await r.text())
+        r = await c.get("/api/bookings"); check("«мои заявки» без входа → 401", r.status == 401)
+        r = await c.post("/api/bookings", json={}); check("бронь без входа → 401", r.status == 401)
+        r = await c.get("/api/me"); check("профиль без входа → 401", r.status == 401)
+        r = await c.get("/api/admin/garages"); check("админка без входа → 401", r.status == 401)
         r = await c.get("/api/me", headers={"Authorization": "tma " + init_data(CLIENT)})
         check("настоящая подпись Telegram принимается", r.status == 200 and (await r.json())["id"] == CLIENT)
         r = await c.get("/api/me", headers={"Authorization": "tma " + init_data(CLIENT, tamper=True)})
