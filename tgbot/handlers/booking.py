@@ -6,13 +6,13 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-import db
-import keyboards as kb
-import service
-import texts as t
-from callbacks import BookCb, MyCb
-from states import Booking
-from utils import (
+from core import db
+from tgbot import keyboards as kb
+from core import service
+from tgbot import texts as t
+from tgbot.callbacks import BookCb, MyCb
+from tgbot.states import Booking
+from core.utils import (
     answer_quietly, edit_or_send, garage_hours, now, parse_dt, toggle_range,
 )
 

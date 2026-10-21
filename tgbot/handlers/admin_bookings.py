@@ -6,13 +6,13 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-import db
-import keyboards as kb
-import service
-import texts as t
-from callbacks import DayCb, DecideCb, LeadCb
-from states import Reject
-from utils import IsAdmin, answer_quietly, at_hour, edit_or_send, now, parse_dt, reset, user_lock
+from core import db
+from tgbot import keyboards as kb
+from core import service
+from tgbot import texts as t
+from tgbot.callbacks import DayCb, DecideCb, LeadCb
+from tgbot.states import Reject
+from core.utils import IsAdmin, answer_quietly, at_hour, edit_or_send, now, parse_dt, reset, user_lock
 
 log = logging.getLogger(__name__)
 router = Router(name="admin_bookings")

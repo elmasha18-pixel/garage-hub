@@ -8,12 +8,12 @@ from typing import Any, Dict
 
 from aiohttp import web
 
-import db
-import service
-import texts as t
+from core import db
+from core import service
+from tgbot import texts as t
 from api import serializers as ser
 from api.auth import User, authenticate
-from utils import at_hour, now, parse_dt
+from core.utils import at_hour, now, parse_dt
 
 log = logging.getLogger(__name__)
 

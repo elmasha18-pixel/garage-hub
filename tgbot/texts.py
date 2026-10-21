@@ -4,7 +4,7 @@ from html import escape as h
 from typing import Iterable, List, Optional
 from urllib.parse import quote_plus
 
-from config import ADMIN_PHONE, ADMIN_TG
+from core.config import ADMIN_PHONE, ADMIN_TG
 
 LOGO = "GarageHub"
 DIVIDER = "──────────────"
@@ -214,7 +214,6 @@ CONTACT = (
     "<i>Ответим на вопросы по бронированию и площадкам.</i>"
 )
 
-LOAD_ERROR = "Не удалось загрузить данные. Попробуйте ещё раз через минуту."
 SESSION_EXPIRED = "Эта кнопка устарела. Начните заново через меню."
 CANCELLED = "Действие отменено."
 

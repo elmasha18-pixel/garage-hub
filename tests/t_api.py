@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.ERROR)
 import harness
 harness.VERBOSE = False
 from aiohttp.test_utils import TestClient, TestServer
-import config, db
+from core import config, db
 from api.server import build_app
 
 CLIENT, ADMIN = 900000001, config.ADMIN_ID

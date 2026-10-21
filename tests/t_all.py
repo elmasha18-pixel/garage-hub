@@ -6,7 +6,7 @@ logging.basicConfig(level=logging.ERROR)
 import harness
 harness.VERBOSE = False
 from harness import Harness
-import config, db
+from core import config, db
 
 
 async def main():

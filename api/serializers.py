@@ -5,8 +5,8 @@
 """
 from typing import Optional
 
-import service
-from utils import garage_hours, now, parse_dt
+from core import service
+from core.utils import garage_hours, now, parse_dt
 
 
 def pretty(value: str) -> str:

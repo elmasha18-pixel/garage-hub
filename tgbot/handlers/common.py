@@ -10,15 +10,15 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-import db
-import keyboards as kb
-import media
-import texts as t
-from callbacks import Noop
-from config import webapp_url
-from handlers import admin_bookings, admin_objects, booking, owners, search
-from keyboards import Btn
-from utils import IsAdmin, admin_view, answer_quietly, at_hour, now, reset, set_client_view
+from core import db
+from tgbot import keyboards as kb
+from tgbot import media
+from tgbot import texts as t
+from tgbot.callbacks import Noop
+from core.config import webapp_url
+from tgbot.handlers import admin_bookings, admin_objects, booking, owners, search
+from tgbot.keyboards import Btn
+from core.utils import IsAdmin, admin_view, answer_quietly, at_hour, now, reset, set_client_view
 
 log = logging.getLogger(__name__)
 router = Router(name="common")

@@ -6,12 +6,12 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InputMediaPhoto, Message
 
-import db
-import keyboards as kb
-import media
-import texts as t
-from callbacks import CarouselCb, SearchCb
-from utils import answer_quietly, edit_or_send
+from core import db
+from tgbot import keyboards as kb
+from tgbot import media
+from tgbot import texts as t
+from tgbot.callbacks import CarouselCb, SearchCb
+from core.utils import answer_quietly, edit_or_send
 
 log = logging.getLogger(__name__)
 router = Router(name="search")

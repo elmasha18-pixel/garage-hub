@@ -7,14 +7,14 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InputMediaPhoto, Message
 
-import db
-import keyboards as kb
-import media
-import texts as t
-from callbacks import AddCb, EditCb, EditValCb, ObjCb, PhotoEditCb
-from config import ADMIN_ID, DEFAULT_CLOSE_HOUR, DEFAULT_OPEN_HOUR, MAX_PHOTOS
-from states import AddGarage, EditGarage
-from utils import (
+from core import db
+from tgbot import keyboards as kb
+from tgbot import media
+from tgbot import texts as t
+from tgbot.callbacks import AddCb, EditCb, EditValCb, ObjCb, PhotoEditCb
+from core.config import ADMIN_ID, DEFAULT_CLOSE_HOUR, DEFAULT_OPEN_HOUR, MAX_PHOTOS
+from tgbot.states import AddGarage, EditGarage
+from core.utils import (
     IsAdmin, answer_quietly, edit_or_send, now, parse_working_hours, reset, user_lock,
 )
 
@@ -122,7 +122,7 @@ async def on_object(callback: CallbackQuery, callback_data: ObjCb, state: FSMCon
 
 
 async def send_client_card(message: Message, g: dict) -> None:
-    from handlers.search import card_caption
+    from tgbot.handlers.search import card_caption
     sent = await message.answer_photo(
         photo=media.garage_photo(g), caption=card_caption(g), reply_markup=kb.carousel(g, 0, 1),
     )

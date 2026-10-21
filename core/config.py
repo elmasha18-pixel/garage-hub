@@ -6,7 +6,7 @@ import httpx
 from dotenv import load_dotenv
 from supabase import ClientOptions, create_client
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent   # корень проекта (config.py лежит в core/)
 load_dotenv(BASE_DIR / ".env")
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")

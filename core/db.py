@@ -7,7 +7,7 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Dict, Iterable, List, Optional
 
-from config import supabase
+from core.config import supabase
 
 ACTIVE_STATUSES = ["pending", "confirmed"]
 

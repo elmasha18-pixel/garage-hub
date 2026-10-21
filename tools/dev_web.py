@@ -1,5 +1,7 @@
 """Запускает ТОЛЬКО веб-часть Mini App (без бота), чтобы смотреть и править интерфейс.
-Вход без Telegram: http://localhost:8080/?dev=client  или  ?dev=admin
+Из корня проекта: WEB_PORT=8081 python3 -m tools.dev_web
+Вход без Telegram: http://localhost:8081/?dev=client  или  ?dev=admin
+Сообщения в Telegram не отправляются (QuietBot).
 """
 import asyncio
 import logging
@@ -10,7 +12,7 @@ os.environ.setdefault("MINIAPP_DEV", "1")
 from aiogram import Bot
 
 from api.server import start_web
-from config import TOKEN
+from core.config import TOKEN
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s")
 log = logging.getLogger("dev_web")

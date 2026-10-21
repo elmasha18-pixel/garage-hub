@@ -15,12 +15,10 @@ export const parseDay = (iso) => new Date(`${iso}T12:00:00Z`);
 const fmt = (opts) => new Intl.DateTimeFormat("ru-RU", { timeZone: "UTC", ...opts });
 const wdShort = fmt({ weekday: "short" });
 const dayMonth = fmt({ day: "numeric", month: "long" });
-const dayShortFmt = fmt({ day: "2-digit", month: "2-digit" });
 
 export const weekdayShort = (iso) => wdShort.format(parseDay(iso)).replace(".", "");
 export const dayNumber = (iso) => parseDay(iso).getUTCDate();
 export const dayLong = (iso) => `${weekdayShort(iso)}, ${dayMonth.format(parseDay(iso))}`;
-export const dayShort = (iso) => `${weekdayShort(iso)} ${dayShortFmt.format(parseDay(iso))}`;
 
 export const hhmm = (h) => `${String(h).padStart(2, "0")}:00`;
 export const span = (start, end) => `${hhmm(start)}–${hhmm(end)}`;

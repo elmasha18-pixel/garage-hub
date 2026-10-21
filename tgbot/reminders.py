@@ -12,14 +12,14 @@ from datetime import timedelta
 
 from aiogram import Bot
 
-import db
-import keyboards as kb
-import texts as t
-from config import (
+from core import db
+from tgbot import keyboards as kb
+from tgbot import texts as t
+from core.config import (
     ADMIN_ID, ADMIN_REMIND_AFTER_MIN, CLIENT_WAIT_NOTICE_MIN, REMINDER_INTERVAL_SEC,
     VISIT_REMIND_BEFORE_MIN,
 )
-from utils import now, parse_dt
+from core.utils import now, parse_dt
 
 log = logging.getLogger(__name__)
 

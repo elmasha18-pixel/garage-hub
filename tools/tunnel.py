@@ -12,7 +12,7 @@ import subprocess
 import sys
 import time
 
-from config import CACHE_DIR, WEB_PORT, WEBAPP_URL_FILE
+from core.config import CACHE_DIR, WEB_PORT, WEBAPP_URL_FILE
 
 URL_RE = re.compile(r"https://[a-z0-9-]+\.lhr\.life")
 SSH = [

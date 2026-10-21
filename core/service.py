@@ -9,11 +9,11 @@ from typing import Dict, List, Optional, Tuple
 
 from aiogram import Bot
 
-import db
-import keyboards as kb
-import texts as t
-from config import ADMIN_ID, BOOKING_WINDOW_DAYS
-from utils import (
+from core import db
+from tgbot import keyboards as kb
+from tgbot import texts as t
+from core.config import ADMIN_ID, BOOKING_WINDOW_DAYS
+from core.utils import (
     at_hour, busy_hours, garage_hours, now, parse_dt, past_hours, user_lock,
 )
 

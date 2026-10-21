@@ -11,8 +11,8 @@ from typing import Dict, Optional, Set
 
 from aiohttp import web
 
-import db
-from config import CACHE_DIR
+from core import db
+from core.config import CACHE_DIR
 
 log = logging.getLogger(__name__)
 

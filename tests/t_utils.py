@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from utils import parse_dt
+from core.utils import parse_dt
 
 CASES = {
     "2026-10-21T18:17:08.17434+00:00": "2026-10-21 21:17:08.174340",   # 5 цифр — та самая ошибка

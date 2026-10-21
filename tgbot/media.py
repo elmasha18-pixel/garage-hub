@@ -4,7 +4,7 @@ from typing import Dict, Optional, Union
 
 from aiogram.types import FSInputFile, Message
 
-from config import ASSETS_DIR
+from core.config import ASSETS_DIR
 
 _file_ids: Dict[str, str] = {}
 

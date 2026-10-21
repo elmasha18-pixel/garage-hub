@@ -5,12 +5,12 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-import keyboards as kb
-import service
-import texts as t
-from callbacks import OwnerCb
-from states import OwnerRequest
-from utils import answer_quietly, reset
+from tgbot import keyboards as kb
+from core import service
+from tgbot import texts as t
+from tgbot.callbacks import OwnerCb
+from tgbot.states import OwnerRequest
+from core.utils import answer_quietly, reset
 
 log = logging.getLogger(__name__)
 router = Router(name="owners")

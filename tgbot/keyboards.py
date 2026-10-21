@@ -11,10 +11,10 @@ from aiogram.types import (
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-import texts as t
-from config import webapp_url
-from utils import admin_view
-from callbacks import (
+from tgbot import texts as t
+from core.config import webapp_url
+from core.utils import admin_view
+from tgbot.callbacks import (
     AddCb, BookCb, CarouselCb, DayCb, DecideCb, EditCb, EditValCb, LeadCb, MyCb,
     Noop, ObjCb, OwnerCb, PhotoEditCb, SearchCb,
 )

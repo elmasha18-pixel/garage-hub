@@ -8,7 +8,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import BaseFilter
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
-from config import ADMIN_ID, DEFAULT_CLOSE_HOUR, DEFAULT_OPEN_HOUR, LOCAL_TZ
+from core.config import ADMIN_ID, DEFAULT_CLOSE_HOUR, DEFAULT_OPEN_HOUR, LOCAL_TZ
 
 
 # ─── Роли ────────────────────────────────────────────────────

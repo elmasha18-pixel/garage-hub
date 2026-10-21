@@ -27,7 +27,6 @@ export function html(strings, ...values) {
 
 export const $ = (selector, root = document) => root.querySelector(selector);
 export const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function safeStorage(kind = "local") {
   try {

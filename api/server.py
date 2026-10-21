@@ -5,7 +5,7 @@ from aiogram import Bot
 from aiohttp import web
 
 from api import photos, routes
-from config import WEB_HOST, WEB_PORT, WEBAPP_DIR
+from core.config import WEB_HOST, WEB_PORT, WEBAPP_DIR
 
 log = logging.getLogger(__name__)
 

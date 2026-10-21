@@ -12,7 +12,7 @@ from aiogram.client.session.base import BaseSession
 from aiogram.enums import ParseMode
 from aiogram.types import Chat, InlineKeyboardMarkup, Message, PhotoSize, User
 
-import bot as app
+from tgbot import app
 
 _ids = itertools.count(5000)
 _upd = itertools.count(1)

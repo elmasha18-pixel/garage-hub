@@ -4,7 +4,7 @@
 cd "$(dirname "$0")" || exit 1
 source venv/bin/activate
 
-python3 tunnel.py &
+python3 -m tools.tunnel &
 TUNNEL_PID=$!
 trap 'kill $TUNNEL_PID 2>/dev/null; wait $TUNNEL_PID 2>/dev/null' EXIT INT TERM
 

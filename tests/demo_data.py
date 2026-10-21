@@ -2,7 +2,7 @@
 import asyncio, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import config, db
+from core import config, db
 
 BASE = {"photos": [], "owner_name": "Тест", "owner_phone": "+7 900 000-00-01", "owner_contact": "@test_owner",
         "owner_telegram_id": config.ADMIN_ID, "is_active": True}
