@@ -53,8 +53,19 @@ WEBAPP_DIR = BASE_DIR / "webapp"
 CACHE_DIR = BASE_DIR / "cache"
 WEB_HOST = os.getenv("WEB_HOST", "127.0.0.1")
 WEB_PORT = int(os.getenv("WEB_PORT", "8080"))
-# Публичный HTTPS-адрес Mini App (нужен Telegram). Пусто — приложение в боте не показывается.
+# Публичный HTTPS-адрес Mini App (нужен Telegram). Берётся из .env (WEBAPP_URL) или, если там пусто,
+# из файла, который пишет tunnel.py (адрес временного туннеля меняется при переподключении).
 WEBAPP_URL = (os.getenv("WEBAPP_URL") or "").strip().rstrip("/")
+WEBAPP_URL_FILE = CACHE_DIR / "webapp_url.txt"
+
+
+def webapp_url() -> str:
+    if WEBAPP_URL:
+        return WEBAPP_URL
+    try:
+        return WEBAPP_URL_FILE.read_text(encoding="utf-8").strip().rstrip("/")
+    except OSError:
+        return ""
 # Режим разработки: вход без Telegram, только с локального адреса. На сервере НЕ включать.
 MINIAPP_DEV = os.getenv("MINIAPP_DEV", "").lower() in ("1", "true", "yes")
 INIT_DATA_MAX_AGE_SEC = 24 * 3600

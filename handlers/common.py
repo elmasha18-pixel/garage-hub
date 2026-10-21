@@ -15,7 +15,7 @@ import keyboards as kb
 import media
 import texts as t
 from callbacks import Noop
-from config import WEBAPP_URL
+from config import webapp_url
 from handlers import admin_bookings, admin_objects, booking, owners, search
 from keyboards import Btn
 from utils import IsAdmin, admin_view, answer_quietly, at_hour, now, reset, set_client_view
@@ -30,7 +30,7 @@ async def show_home(message: Message, user_id: int, state: FSMContext) -> None:
         await show_dashboard(message)
         return
     sent = await message.answer_photo(
-        photo=media.image("cover"), caption=t.START + (t.APP_HINT if WEBAPP_URL else ""), reply_markup=kb.user_menu(),
+        photo=media.image("cover"), caption=t.START + (t.APP_HINT if webapp_url() else ""), reply_markup=kb.user_menu(),
     )
     media.remember("cover", sent)
 
@@ -64,7 +64,7 @@ async def cmd_app(message: Message):
     if markup:
         await message.answer(t.APP_OPEN, reply_markup=markup)
     else:
-        await message.answer("Приложение пока не подключено. Пользуйтесь меню бота.")
+        await message.answer("Приложение сейчас недоступно. Пользуйтесь меню бота — всё работает и здесь.")
 
 
 @router.message(Command("client"), IsAdmin())

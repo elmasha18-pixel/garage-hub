@@ -12,7 +12,7 @@ from aiogram.types import (
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 import texts as t
-from config import WEBAPP_URL
+from config import webapp_url
 from utils import admin_view
 from callbacks import (
     AddCb, BookCb, CarouselCb, DayCb, DecideCb, EditCb, EditValCb, LeadCb, MyCb,
@@ -99,9 +99,10 @@ def cancel_menu() -> ReplyKeyboardMarkup:
 
 def open_app() -> Optional[InlineKeyboardMarkup]:
     """Кнопка запуска Mini App. Нужна публичная HTTPS-ссылка (WEBAPP_URL в .env)."""
-    if not WEBAPP_URL:
+    url = webapp_url()
+    if not url:
         return None
-    return _markup([InlineKeyboardButton(text="Открыть приложение", web_app=WebAppInfo(url=WEBAPP_URL + "/"))])
+    return _markup([InlineKeyboardButton(text="Открыть приложение", web_app=WebAppInfo(url=url + "/"))])
 
 
 # ─── Поиск ──────────────────────────────────────────────────
