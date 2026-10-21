@@ -194,7 +194,7 @@ def booking_slots(open_h: int, close_h: int, blocked: Set[int], selected: List[i
     rows = kb.export()
     bottom = [_btn("← Даты", BookCb(action="dates"))]
     if selected and total is not None:
-        bottom.append(_btn(f"Отправить · {t.money(total)}", BookCb(action="send")))
+        bottom.append(_btn("Отправить заявку", BookCb(action="send")))
     rows.append(bottom)
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
