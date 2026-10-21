@@ -1,23 +1,39 @@
 import { html } from "../dom.js";
-import { dayLong, hours, money, span } from "../format.js";
+import { dayLong, money, span } from "../format.js";
 import { icon } from "../icons.js";
 import { go, render } from "../router.js";
-import { miniThumb } from "../ui/cards.js";
+import { hoursText } from "../ui/cards.js";
 
 let last = null;
 export const setLastBooking = (booking) => { last = booking; };
 
+/* Где сейчас заявка: отправлена → подтверждение → визит */
 export function stepper(status) {
-  const done = (label, text) => html`<div class="step done"><span class="node">${icon("check")}</span><div><div class="t">${label}</div>${text ? html`<div class="d">${text}</div>` : ""}</div></div>`;
+  const step = (state, iconName, title, detail) => html`
+    <li class="step ${state}"><span class="node">${icon(iconName)}</span>
+      <div><div class="t">${title}</div>${detail ? html`<div class="d">${detail}</div>` : ""}</div></li>`;
   if (status === "confirmed") {
-    return html`<div class="steps">${done("Заявка отправлена")}${done("Подтверждена", "Приезжайте в выбранное время")}
-      <div class="step now"><span class="node">${icon("clock")}</span><div><div class="t">Визит</div></div></div></div>`;
+    return html`<ol class="steps">
+      ${step("done", "check", "Заявка отправлена")}
+      ${step("done", "check", "Подтверждена", "Приезжайте в выбранное время")}
+      ${step("now", "clock", "Визит")}
+    </ol>`;
   }
-  return html`<div class="steps">
-    ${done("Заявка отправлена")}
-    <div class="step now"><span class="node">${icon("clock")}</span><div><div class="t">Ожидает подтверждения</div><div class="d">Сообщение придёт в Telegram</div></div></div>
-    <div class="step future"><span class="node">${icon("garage")}</span><div><div class="t">Визит</div></div></div>
-  </div>`;
+  return html`<ol class="steps">
+    ${step("done", "check", "Заявка отправлена")}
+    ${step("now", "clock", "Ждёт подтверждения", "Ответ придёт сообщением в Telegram")}
+    ${step("future", "garage", "Визит")}
+  </ol>`;
+}
+
+export function bookingProps(b) {
+  return html`<dl class="props">
+    <dt>Бокс</dt><dd>${b.garage.name}</dd>
+    <dt>Адрес</dt><dd>${[b.garage.district, b.garage.address].filter(Boolean).join(", ") || "—"}</dd>
+    <dt>Дата</dt><dd>${dayLong(b.date)}</dd>
+    <dt>Время</dt><dd class="num">${span(b.start_hour, b.end_hour)}, ${hoursText(b.hours)}</dd>
+    <dt>Сумма</dt><dd class="num" style="font-weight:600">${money(b.total)}</dd>
+  </dl>`;
 }
 
 export default {
@@ -25,34 +41,21 @@ export default {
     if (!last) { go("/my", { replace: true }); return; }
     const b = last;
     render(ctx, html`
-      <div class="success-hero">
-        <div class="check-ring">
-          <svg viewBox="0 0 92 92"><circle class="ring" cx="46" cy="46" r="45"/><path class="tick" d="M28 47l12 12 24-26"/></svg>
-        </div>
-        <h1 class="h-title" style="margin-top:18px">Заявка №${b.id} отправлена</h1>
-        <p class="muted" style="margin-top:6px">Как только её подтвердят, мы напишем вам в Telegram.</p>
-      </div>
+      <div class="mt-xl"><span class="done-mark">${html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`}</span></div>
+      <h1 class="title-l mt-l">Заявка отправлена</h1>
+      <p class="muted mt-s">Номер заявки ${b.id}. Как только её подтвердят, придёт сообщение в Telegram.</p>
 
-      <div class="card pad stack" style="margin-top:22px">
-        <div class="row" style="gap:12px">
-          ${miniThumb(b.garage.photo)}
-          <div class="grow"><div style="font-weight:650">${b.garage.name}</div><div class="muted" style="font-size:13.5px">${b.garage.district || b.garage.address}</div></div>
-        </div>
-        <div class="row-between" style="padding-top:12px;border-top:1px solid var(--border)">
-          <div><div class="faint" style="font-size:13px">${dayLong(b.date)}</div><div style="font-weight:700;font-size:17px" class="num">${span(b.start_hour, b.end_hour)} · ${hours(b.hours)}</div></div>
-          <div class="num" style="font-size:20px;font-weight:800">${money(b.total)}</div>
-        </div>
-      </div>
+      <section class="section">${bookingProps(b)}</section>
+      <section class="section">${stepper("pending")}</section>
+      <p class="hint section">${icon("info")}<span>Оплата на месте, напрямую площадке.</span></p>
 
-      <div class="card pad" style="margin-top:12px">${stepper("pending")}</div>
-      <p class="faint" style="text-align:center;font-size:13px;margin-top:14px">Оплата на месте, напрямую площадке.</p>
-
-      <div class="stack" style="margin-top:22px">
-        <button class="btn primary block" data-action="my">Мои заявки</button>
-        <button class="btn secondary block" data-action="home">Найти ещё</button>
+      <div class="section stack">
+        <button class="btn primary l block" data-action="my">Мои заявки</button>
+        <button class="btn secondary l block" data-action="home">Найти ещё бокс</button>
       </div>`, { tabbar: false });
-    document.querySelector(".screen").classList.remove("no-tabbar");
-    document.querySelector(".screen").style.paddingBottom = "calc(var(--safe-bottom) + 32px)";
+    const screen = document.querySelector(".screen");
+    screen.classList.remove("no-tabbar");
+    screen.style.paddingBottom = "calc(var(--safe-bottom) + 32px)";
   },
   actions: {
     my: () => go("/my", { replace: true }),

@@ -6,6 +6,7 @@ export function toast(message, type = "ok") {
   const root = document.getElementById("toast-root");
   const el = document.createElement("div");
   el.className = `toast ${type}`;
+  el.setAttribute("role", type === "err" ? "alert" : "status");
   el.innerHTML = String(html`${icon(type === "err" ? "info" : "check")}<span>${message}</span>`);
   root.append(el);
   if (type === "err") haptic.error(); else haptic.success();

@@ -37,9 +37,9 @@ export function ago(minutes) {
 }
 
 export const SIZES = {
-  small: "до 4,5 м · седаны",
-  medium: "до 5,5 м · внедорожники",
-  large: "до 7 м · Газели",
+  small: "до 4,5 м (седаны)",
+  medium: "до 5,5 м (внедорожники)",
+  large: "до 7 м (Газели)",
 };
 export const TOOLS = { all: "есть на площадке", none: "нужен свой", partial: "частично" };
 export const TYPES = { garage: "Гараж самообслуживания", detailing: "Детейлинг-бокс" };

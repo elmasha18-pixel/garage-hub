@@ -1,6 +1,6 @@
 import { canAuthenticate } from "./api.js";
 import { html } from "./dom.js";
-import { icon } from "./icons.js";
+import { icon, placeholderArt } from "./icons.js";
 import { defineRoute, go, refresh, start } from "./router.js";
 import { loadMe, setActiveBookings, state } from "./store.js";
 import { initTelegram, startParam } from "./tg.js";
@@ -24,8 +24,9 @@ document.addEventListener("load", (e) => {
 document.addEventListener("error", (e) => {
   const img = e.target;
   if (img.tagName !== "IMG" || !img.classList.contains("fade-img")) return;
-  img.classList.add("is-loaded");
-  img.style.visibility = "hidden";
+  const art = document.createElement("div");
+  art.innerHTML = String(placeholderArt);
+  img.replaceWith(art.firstElementChild);
 }, true);
 
 function fatal(title, text) {

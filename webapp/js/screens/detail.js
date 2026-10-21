@@ -3,10 +3,10 @@ import { shareLink } from "../config.js";
 import { html } from "../dom.js";
 import { hhmm, mapUrl, money, SIZES, TOOLS, TYPES } from "../format.js";
 import { icon, placeholderArt } from "../icons.js";
-import { back, go, patch, render, view } from "../router.js";
-import { garageById, isFav, toggleFav } from "../store.js";
+import { back, go, patch, render } from "../router.js";
+import { garageById, toggleFav } from "../store.js";
 import { haptic, openLink, openTelegramLink } from "../tg.js";
-import { errorState, favButton, locationLine } from "../ui/cards.js";
+import { errorState, favButton, hoursText, locationLine, priceLine } from "../ui/cards.js";
 import { openLightbox } from "../ui/lightbox.js";
 
 let garage = null;
@@ -14,98 +14,94 @@ let garage = null;
 function gallery(g) {
   const photos = g.photos;
   const slides = photos.length
-    ? photos.map((src, i) => html`<div class="slide" data-action="photo" data-index="${i}"><img class="fade-img" src="${src}" alt="${g.name}, фото ${i + 1}" ${i ? "" : html`fetchpriority="high"`}></div>`)
+    ? photos.map((src, i) => html`<div class="slide" data-action="photo" data-index="${i}"><img class="fade-img" src="${src}" alt="${g.name}, фото ${i + 1} из ${photos.length}"></div>`)
     : html`<div class="slide">${placeholderArt}</div>`;
   return html`
     <div class="gallery">
       <div class="track" id="track">${slides}</div>
-      <div class="shade"></div>
       <div class="bar">
-        <button class="icon-btn glass" data-action="back" aria-label="Назад">${icon("left")}</button>
+        <button class="icon-btn on-photo" data-action="back" aria-label="Назад">${icon("left")}</button>
         <div class="group">
-          <button class="icon-btn glass" data-action="share" aria-label="Поделиться">${icon("share")}</button>
+          <button class="icon-btn on-photo" data-action="share" aria-label="Поделиться">${icon("share")}</button>
           ${favButton(g.id)}
         </div>
       </div>
-      ${photos.length > 1 ? html`<div class="dots" id="dots">${photos.map((_, i) => html`<i class="${i === 0 ? "is-on" : ""}"></i>`)}</div>` : ""}
+      ${photos.length > 1 ? html`<span class="counter" id="counter">1 / ${photos.length}</span>` : ""}
     </div>`;
 }
 
-function features(g) {
-  const row = (iconName, key, value, ok) => html`
-    <div class="item"><span class="ico ${ok ? "ok" : ""}">${icon(iconName)}</span><span class="k">${key}</span><span class="v">${value}</span></div>`;
-  const rows = [];
+function props(g) {
+  const rows = [["Тип", TYPES[g.type]]];
   if (g.type !== "detailing") {
-    rows.push(row("lift", "Подъёмник", g.has_lift ? "Есть" : "Нет", g.has_lift));
-    rows.push(row("pit", "Смотровая яма", g.has_pit ? "Есть" : "Нет", g.has_pit));
-    rows.push(row("wrench", "Инструмент", TOOLS[g.tools] || "Не указано", g.tools === "all"));
+    rows.push(["Подъёмник", g.has_lift ? "Есть" : "Нет"]);
+    rows.push(["Смотровая яма", g.has_pit ? "Есть" : "Нет"]);
+    rows.push(["Инструмент", TOOLS[g.tools] ? TOOLS[g.tools][0].toUpperCase() + TOOLS[g.tools].slice(1) : "Не указан"]);
   }
-  if (g.size) rows.push(row("ruler", "Размер бокса", SIZES[g.size], false));
-  if (g.working_hours) rows.push(row("clock", "Часы работы", g.working_hours, false));
-  return html`<div class="kv">${rows}</div>`;
+  if (g.size) rows.push(["Размер бокса", SIZES[g.size]]);
+  if (g.working_hours) rows.push(["Часы работы", g.working_hours]);
+  return html`<dl class="props">${rows.map(([k, v]) => html`<dt>${k}</dt><dd>${v}</dd>`)}</dl>`;
 }
 
-function todayStrip(av) {
+function today(av) {
   const day = av.days[0];
   const blocked = new Set(day.blocked);
   const cells = [];
-  for (let h = av.open_hour; h < av.close_hour; h++) cells.push(html`<i class="${blocked.has(h) ? "busy" : ""}"></i>`);
-  const free = day.free;
+  let first = null;
+  for (let h = av.open_hour; h < av.close_hour; h++) {
+    const busy = blocked.has(h);
+    if (!busy && first === null) first = h;
+    cells.push(html`<i class="${busy ? "busy" : ""}"></i>`);
+  }
   return html`
-    <div class="row-between" style="margin-bottom:10px">
-      <span class="h-section">Сегодня</span>
-      <span class="avail ${free > 0 ? "on" : ""}"><i class="dot"></i>${free > 0 ? `свободно ${free} ч` : "мест нет"}</span>
+    <div class="between">
+      <h2 class="title-s">Сегодня</h2>
+      ${day.free > 0
+        ? html`<span class="avail on" style="margin:0">Свободно с ${hhmm(first)}, ${hoursText(day.free)}</span>`
+        : html`<span class="avail" style="margin:0">Мест нет, смотрите другие дни</span>`}
     </div>
-    <div class="daybar">${cells}</div>
+    <div class="daybar mt-m" role="img" aria-label="Загрузка на сегодня: свободно ${hoursText(day.free)}">${cells}</div>
     <div class="daybar-scale"><span>${hhmm(av.open_hour)}</span><span>${hhmm(av.close_hour)}</span></div>`;
 }
 
 function body(g) {
-  const long = (g.description || "").length > 220;
+  const long = (g.description || "").length > 260;
   return html`
     ${gallery(g)}
-    <div class="sheet-body-up stack-lg">
-      <div class="stack">
-        <div class="row-between">
-          <span class="pill" style="background:var(--surface-2)">${TYPES[g.type]}</span>
-        </div>
-        <h1 class="h-title" style="font-size:25px">${g.name}</h1>
-        <div class="row" style="gap:8px;align-items:flex-start">
-          <span style="width:18px;height:18px;flex:none;margin-top:2px;color:var(--text-3)">${icon("pin")}</span>
-          <span class="grow muted">${locationLine(g) || "Адрес уточняется"}</span>
-          <a class="link-btn" data-action="route">Маршрут</a>
-        </div>
+    <div class="pad">
+      <h1 class="title-m mt-l">${g.name}</h1>
+      <div class="mt-s big-price">${priceLine(g.price, "за час")}</div>
+      <div class="mt-m">
+        <div>${locationLine(g) || "Адрес уточняется"}</div>
+        ${g.address ? html`<button class="link mt-xs" data-action="route">Показать на карте</button>` : ""}
       </div>
 
-      <div class="card pad" id="today"><div class="skeleton" style="height:56px"></div></div>
+      <section class="section" id="today"><div class="skeleton" style="height:48px"></div></section>
 
-      <div class="stack">
-        <div class="h-section">Что есть</div>
-        ${features(g)}
-      </div>
+      <section class="section">
+        <h2 class="title-m">Характеристики</h2>
+        ${props(g)}
+      </section>
 
       ${g.description ? html`
-        <div class="stack">
-          <div class="h-section">О площадке</div>
-          <p class="quote ${long ? "is-clamped" : ""}" id="desc">${g.description}</p>
-          ${long ? html`<button class="link-btn" data-action="more">Читать полностью</button>` : ""}
-        </div>` : ""}
+        <section class="section">
+          <h2 class="title-m">Описание</h2>
+          <p class="description ${long ? "is-clamped" : ""}" id="desc">${g.description}</p>
+          ${long ? html`<button class="link mt-s" data-action="more">Показать полностью</button>` : ""}
+        </section>` : ""}
 
-      <div class="note">${icon("info")}<span>Оплата на месте, напрямую площадке. Заявка подтверждается, и вы получаете сообщение в Telegram.</span></div>
+      <p class="hint section">${icon("info")}<span>Оплата на месте, напрямую площадке. Когда заявку подтвердят, придёт сообщение в Telegram.</span></p>
     </div>
-    <div class="cta-bar">
-      <div class="sum"><small>Стоимость</small><b class="num">${money(g.price)}<span class="faint" style="font-size:13px;font-weight:600"> /ч</span></b></div>
-      <button class="btn primary" data-action="book">Выбрать время</button>
-    </div>`;
+    <div class="cta-bar"><button class="btn primary l" data-action="book">Выбрать время</button></div>`;
 }
 
 function bindGallery() {
   const track = document.getElementById("track");
-  const dots = document.getElementById("dots");
-  if (!track || !dots) return;
+  const counter = document.getElementById("counter");
+  if (!track || !counter) return;
+  const total = garage.photos.length;
   track.addEventListener("scroll", () => {
     const i = Math.round(track.scrollLeft / track.clientWidth);
-    [...dots.children].forEach((d, n) => d.classList.toggle("is-on", n === i));
+    counter.textContent = `${i + 1} / ${total}`;
   }, { passive: true });
 }
 
@@ -113,24 +109,23 @@ async function enter(ctx) {
   const id = ctx.params.id;
   garage = garageById(id);
   if (!garage) {
-    render(ctx, html`<div class="skeleton" style="height:260px;margin:0 calc(var(--gutter) * -1)"></div>`, { tabbar: false });
+    render(ctx, html`<div class="skeleton" style="aspect-ratio:4/3;border-radius:0"></div><div class="pad"><div class="skeleton mt-l" style="height:24px;width:70%"></div></div>`, { tabbar: false, flush: true });
     try {
       garage = await api.garage(id);
     } catch (e) {
       if (!ctx.isCurrent()) return;
-      render(ctx, html`<div class="topbar"><button class="icon-btn" data-action="back" aria-label="Назад">${icon("left")}</button></div>${errorState(e.status === 404 ? "Эта площадка больше недоступна." : e.message)}`, { tabbar: false });
+      render(ctx, html`<div class="header"><button class="icon-btn" data-action="back" aria-label="Назад">${icon("left")}</button></div>${errorState(e.status === 404 ? "Эта площадка больше недоступна." : e.message)}`, { tabbar: false });
       return;
     }
     if (!ctx.isCurrent()) return;
   }
   render(ctx, body(garage), { tabbar: false, flush: true, animate: !ctx.refresh });
   bindGallery();
-
   try {
     const av = await api.availability(id);
-    if (ctx.isCurrent()) patch("#today", todayStrip(av));
+    if (ctx.isCurrent()) patch("#today", today(av));
   } catch {
-    if (ctx.isCurrent()) patch("#today", html`<span class="muted">Расписание временно недоступно</span>`);
+    if (ctx.isCurrent()) patch("#today", html`<p class="caption">Расписание сейчас недоступно. Время можно выбрать на следующем шаге.</p>`);
   }
 }
 
@@ -142,7 +137,7 @@ export default {
     route: () => openLink(mapUrl(garage)),
     photo: (el) => openLightbox(garage.photos, Number(el.dataset.index)),
     share() {
-      const text = `${garage.name} — ${money(garage.price)}/ч`;
+      const text = `${garage.name}, ${money(garage.price)} за час`;
       openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareLink(garage.id))}&text=${encodeURIComponent(text)}`);
     },
     fav(el) {

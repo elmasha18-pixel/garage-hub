@@ -8,7 +8,7 @@ const TABS = [
   { id: "my", path: "/my", label: "Заявки", icon: "list" },
   { id: "owner", path: "/owner", label: "Владельцам", icon: "garage" },
   { id: "contacts", path: "/contacts", label: "Контакты", icon: "phone" },
-  { id: "admin", path: "/admin", label: "Админ", icon: "shield", adminOnly: true },
+  { id: "admin", path: "/admin", label: "Управление", icon: "shield", adminOnly: true },
 ];
 
 let active = null;

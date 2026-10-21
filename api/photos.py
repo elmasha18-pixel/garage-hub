@@ -7,7 +7,7 @@ import asyncio
 import hashlib
 import logging
 import time
-from typing import Dict, Set
+from typing import Dict, Optional, Set
 
 from aiohttp import web
 
@@ -20,15 +20,16 @@ PHOTO_DIR = CACHE_DIR / "photos"
 KNOWN_TTL_SEC = 60
 
 _known: Set[str] = set()
-_known_at = 0.0
+_known_at: Optional[float] = None   # None = ещё не загружали (monotonic на маке стартует почти с нуля)
 _locks: Dict[str, asyncio.Lock] = {}
 
 
 async def is_known(file_id: str) -> bool:
     global _known, _known_at
-    if time.monotonic() - _known_at > KNOWN_TTL_SEC or file_id not in _known:
-        # Если id нет в кеше, перечитываем базу: объект могли только что добавить.
-        if time.monotonic() - _known_at > 5:
+    age = None if _known_at is None else time.monotonic() - _known_at
+    if age is None or age > KNOWN_TTL_SEC or file_id not in _known:
+        # Если id нет в кеше, перечитываем базу: объект могли только что добавить (не чаще раза в 5 с).
+        if age is None or age > 5:
             rows = await db.garages(active=None)
             _known = {p for g in rows for p in (g.get("photos") or [])}
             _known_at = time.monotonic()

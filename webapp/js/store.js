@@ -15,7 +15,7 @@ export const state = {
   garages: null,
   garagesAt: 0,
   favorites: new Set(read(local, "gh_fav", [])),
-  filters: read(session, "gh_filters", { type: "all", districts: [], lift: false, pit: false, tools: false, fav: false, sort: "smart" }),
+  filters: { q: "", ...read(session, "gh_filters", { type: "all", districts: [], lift: false, pit: false, tools: false, fav: false, sort: "smart" }) },
   activeBookings: 0,
 };
 
@@ -63,7 +63,7 @@ export function setFilters(patch) {
 }
 
 export function resetFilters() {
-  setFilters({ type: "all", districts: [], lift: false, pit: false, tools: false, fav: false });
+  setFilters({ q: "", type: "all", districts: [], lift: false, pit: false, tools: false, fav: false });
 }
 
 export function setActiveBookings(n) {
@@ -72,8 +72,12 @@ export function setActiveBookings(n) {
 }
 
 /* Фильтрация и сортировка каталога — на устройстве, чтобы счётчики и список обновлялись мгновенно */
+const norm = (s) => String(s || "").toLowerCase().replace(/ё/g, "е");
+
 export function applyFilters(garages, filters = state.filters, ignore = null) {
+  const q = norm(filters.q).trim();
   let list = garages.filter((g) => {
+    if (q && !norm(`${g.name} ${g.district} ${g.address}`).includes(q)) return false;
     if (filters.type !== "all" && g.type !== filters.type) return false;
     if (ignore !== "districts" && filters.districts.length && !filters.districts.includes(g.district)) return false;
     if (filters.lift && !g.has_lift) return false;

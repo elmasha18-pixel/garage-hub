@@ -10,54 +10,49 @@ let type = "garage";
 let sending = false;
 const draft = { name: "", phone: "", address: "" };
 
-const benefit = (iconName, title, text) => html`
-  <div class="benefit"><span class="ico">${icon(iconName)}</span><div><b>${title}</b><span>${text}</span></div></div>`;
+const FACTS = [
+  "Размещение бесплатное, без комиссии",
+  "Клиенты бронируют по часам, оплата — вам на месте",
+  "Расписание и заявки ведём мы",
+];
 
 function form() {
   return html`
-    <h1 class="h-display">Сдайте свой гараж</h1>
-    <p class="lead" style="margin:8px 0 20px">GarageHub — сервис почасовой аренды гаражей самообслуживания и детейлинг-боксов в Москве и области.</p>
+    <h1 class="title-xl">Сдайте свой бокс по часам</h1>
+    <p class="muted mt-s">GarageHub — сервис почасовой аренды гаражей самообслуживания и детейлинг-боксов в Москве и области.</p>
+    <ul class="mt-l" style="list-style:none;margin-left:0;padding:0">
+      ${FACTS.map((f) => html`<li class="row mt-s" style="gap:10px;align-items:flex-start"><span style="color:var(--success);margin-top:1px">${icon("check", { size: 20 })}</span><span>${f}</span></li>`)}
+    </ul>
 
-    <div class="hero-benefits card pad" style="margin-bottom:22px">
-      ${benefit("rub", "Размещение бесплатное", "Без комиссии и абонентской платы")}
-      ${benefit("calendar", "Клиенты бронируют по часам", "Оплата — вам на месте, напрямую")}
-      ${benefit("list", "Расписание и заявки — у нас", "Вам остаётся принимать гостей")}
-    </div>
-
-    <div class="h-section" style="margin-bottom:12px">Оставьте заявку</div>
-    <div class="stack" id="form">
-      <label class="field" data-field="name"><span>Как к вам обращаться</span>
-        <input class="input" data-input="name" autocomplete="given-name" maxlength="80" placeholder="Имя" value="${draft.name}">
-        <div class="err">Укажите имя</div></label>
-      <label class="field" data-field="phone"><span>Телефон</span>
-        <input class="input" data-input="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+7 900 123-45-67" value="${draft.phone}">
-        <div class="err">Проверьте номер: не хватает цифр</div></label>
-      <div class="field"><span>Что сдаёте</span>
-        <div class="segmented" id="type">
-          <button class="${type === "garage" ? "is-on" : ""}" data-action="type" data-value="garage">Гараж</button>
-          <button class="${type === "detailing" ? "is-on" : ""}" data-action="type" data-value="detailing">Детейлинг-бокс</button>
-        </div></div>
-      <label class="field" data-field="address"><span>Адрес площадки</span>
-        <input class="input" data-input="address" autocomplete="street-address" maxlength="200" placeholder="Город, улица, дом" value="${draft.address}">
-        <div class="err">Укажите адрес</div></label>
-      <button class="btn primary block" data-action="send" style="margin-top:8px">Отправить заявку</button>
-      <p class="faint" style="font-size:12.5px;text-align:center">Отправляя заявку, вы соглашаетесь на обработку контактных данных для связи по размещению.</p>
-    </div>`;
+    <section class="section">
+      <h2 class="title-m">Заявка на размещение</h2>
+      <div class="stack" id="form">
+        <label class="field" data-field="name"><span>Как к вам обращаться</span>
+          <input class="input" data-input="name" autocomplete="given-name" maxlength="80" value="${draft.name}">
+          <span class="err">Укажите имя</span></label>
+        <label class="field" data-field="phone"><span>Телефон</span>
+          <input class="input" data-input="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+7" value="${draft.phone}">
+          <span class="err">В номере не хватает цифр</span></label>
+        <div class="field"><span>Что сдаёте</span>
+          <div class="segmented" id="type">
+            <button class="${type === "garage" ? "is-on" : ""}" data-action="type" data-value="garage" aria-pressed="${type === "garage"}">Гараж</button>
+            <button class="${type === "detailing" ? "is-on" : ""}" data-action="type" data-value="detailing" aria-pressed="${type === "detailing"}">Детейлинг-бокс</button>
+          </div></div>
+        <label class="field" data-field="address"><span>Адрес площадки</span>
+          <input class="input" data-input="address" autocomplete="street-address" maxlength="200" placeholder="Город, улица, дом" value="${draft.address}">
+          <span class="err">Укажите адрес</span></label>
+        <button class="btn primary l block" data-action="send">Отправить заявку</button>
+        <p class="caption">Нажимая кнопку, вы соглашаетесь, что мы свяжемся с вами по этим контактам.</p>
+      </div>
+    </section>`;
 }
 
 function success() {
   return html`
-    <div class="success-hero" style="padding-top:36px">
-      <div class="check-ring"><svg viewBox="0 0 92 92"><circle class="ring" cx="46" cy="46" r="45"/><path class="tick" d="M28 47l12 12 24-26"/></svg></div>
-      <h1 class="h-title" style="margin-top:18px">Заявка принята</h1>
-      <p class="muted" style="margin-top:6px">Свяжемся с вами в ближайшее время.</p>
-    </div>
-    <div class="card pad stack" style="margin-top:22px">
-      <div class="muted" style="font-size:14px">Если удобнее написать самим:</div>
-      <div style="font-weight:650">@${ADMIN_TG}</div>
-      <div style="font-weight:650" class="num">${ADMIN_PHONE}</div>
-    </div>
-    <button class="btn secondary block" data-action="home" style="margin-top:16px">На главную</button>`;
+    <div class="mt-xl"><span class="done-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+    <h1 class="title-l mt-l">Заявка принята</h1>
+    <p class="muted mt-s">Свяжемся с вами в ближайшее время. Если удобнее написать самим — Telegram @${ADMIN_TG} или телефон ${ADMIN_PHONE}.</p>
+    <button class="btn secondary l block section" data-action="home">На главную</button>`;
 }
 
 function validate() {
@@ -73,21 +68,27 @@ function validate() {
   return ok;
 }
 
+const clearError = (el) => el.closest(".field").classList.remove("has-error");
+
 export default {
   enter(ctx) {
     if (!draft.name) draft.name = userFirstName();
     render(ctx, form(), { animate: !ctx.refresh });
   },
   inputs: {
-    name: (el) => { draft.name = el.value; el.closest(".field").classList.remove("has-error"); },
-    phone: (el) => { draft.phone = el.value; el.closest(".field").classList.remove("has-error"); },
-    address: (el) => { draft.address = el.value; el.closest(".field").classList.remove("has-error"); },
+    name: (el) => { draft.name = el.value; clearError(el); },
+    phone: (el) => { draft.phone = el.value; clearError(el); },
+    address: (el) => { draft.address = el.value; clearError(el); },
   },
   actions: {
     type(el) {
       haptic.select();
       type = el.dataset.value;
-      document.querySelectorAll("#type button").forEach((b) => b.classList.toggle("is-on", b.dataset.value === type));
+      document.querySelectorAll("#type button").forEach((b) => {
+        const on = b.dataset.value === type;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", on);
+      });
     },
     async send(el) {
       if (sending) return;
@@ -97,7 +98,8 @@ export default {
       try {
         await api.ownerRequest({ name: draft.name.trim(), phone: draft.phone.trim(), object_type: type, address: draft.address.trim() });
         haptic.success();
-        draft.phone = ""; draft.address = "";
+        draft.phone = "";
+        draft.address = "";
         render({ direction: "fade" }, success());
       } catch (e) {
         el.classList.remove("is-loading");

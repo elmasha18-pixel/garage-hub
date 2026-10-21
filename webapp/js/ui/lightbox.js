@@ -7,7 +7,7 @@ export function openLightbox(photos, index = 0) {
   const root = document.getElementById("lightbox-root");
   root.innerHTML = String(html`
     <div class="lightbox" role="dialog" aria-modal="true" aria-label="Фотографии">
-      <button class="icon-btn glass close" data-close aria-label="Закрыть">${icon("x")}</button>
+      <button class="icon-btn close" data-close aria-label="Закрыть">${icon("x")}</button>
       <div class="track">${photos.map((src) => html`<div class="slide"><img src="${src}" alt=""></div>`)}</div>
       <div class="cnt num">${index + 1} / ${photos.length}</div>
     </div>`);

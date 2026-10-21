@@ -1,132 +1,115 @@
 import { api } from "../api.js";
 import { html } from "../dom.js";
-import { dayLong, dayShort, hours, mapUrl, money, plural, span } from "../format.js";
+import { dayLong, mapUrl, money, span } from "../format.js";
 import { icon } from "../icons.js";
 import { go, patch, render } from "../router.js";
 import { setActiveBookings } from "../store.js";
 import { haptic, openLink } from "../tg.js";
-import { emptyState, errorState, miniThumb, statusPill } from "../ui/cards.js";
+import { emptyState, errorState, statusLabel, thumb } from "../ui/cards.js";
 import { openSheet } from "../ui/sheet.js";
 import { toast } from "../ui/toast.js";
-import { stepper } from "./done.js";
+import { bookingProps, stepper } from "./done.js";
 
 let bookings = [];
 let tab = "upcoming";
 
-const upcomingOf = () => bookings.filter((b) => b.can_cancel).sort((a, b) => (a.date + a.start_hour).localeCompare(b.date + b.start_hour, "ru", { numeric: true }));
+const byStart = (a, b) => (a.date + String(a.start_hour).padStart(2, "0")).localeCompare(b.date + String(b.start_hour).padStart(2, "0"));
+const upcomingOf = () => bookings.filter((b) => b.can_cancel).sort(byStart);
 const historyOf = () => bookings.filter((b) => !b.can_cancel);
 
-function card(b) {
+function row(b) {
   return html`
-    <article class="card pad press" data-action="open" data-id="${b.id}">
-      <div class="row" style="gap:12px">
-        ${miniThumb(b.garage.photo)}
-        <div class="grow">
-          <div style="font-weight:650" class="ellipsis">${b.garage.name}</div>
-          <div class="muted num" style="font-size:13.5px;margin-top:1px">${dayShort(b.date)} · ${span(b.start_hour, b.end_hour)}</div>
-          <div class="row-between" style="margin-top:7px">${statusPill(b.status)}<b class="num">${money(b.total)}</b></div>
-        </div>
-      </div>
-    </article>`;
+    <button class="item press" data-action="open" data-id="${b.id}">
+      ${thumb(b.garage.photo)}
+      <span class="grow">
+        <span class="ellipsis" style="display:block;font-weight:600">${b.garage.name}</span>
+        <span class="caption num" style="display:block;margin-top:2px">${dayLong(b.date)}, ${span(b.start_hour, b.end_hour)}</span>
+        <span class="between mt-s">${statusLabel(b.status)}<span class="price num" style="font-weight:600">${money(b.total)}</span></span>
+      </span>
+    </button>`;
 }
 
 function listMarkup() {
   const list = tab === "upcoming" ? upcomingOf() : historyOf();
   if (!list.length) {
     return tab === "upcoming"
-      ? emptyState({ iconName: "calendar", title: "Предстоящих заявок нет", text: "Выберите бокс и удобное время — это займёт минуту.", button: html`<button class="btn primary" data-action="find">Найти бокс</button>` })
-      : emptyState({ iconName: "list", title: "История пока пуста", text: "Здесь появятся завершённые и отменённые заявки." });
+      ? emptyState({ iconName: "calendar", title: "Предстоящих заявок нет", text: "Выберите бокс и удобное время — это займёт пару минут.", button: html`<button class="btn primary" data-action="find">Найти бокс</button>` })
+      : emptyState({ iconName: "list", title: "История пуста", text: "Здесь появятся прошедшие, отменённые и отклонённые заявки." });
   }
-  return html`<div class="list">${list.map(card)}</div>`;
+  return html`<div class="rows">${list.map(row)}</div>`;
 }
 
 function tabsMarkup() {
   const up = upcomingOf().length;
   return html`
     <div class="segmented">
-      <button class="${tab === "upcoming" ? "is-on" : ""}" data-action="tab" data-value="upcoming">Предстоящие${up ? html`<span class="badge">${up}</span>` : ""}</button>
-      <button class="${tab === "history" ? "is-on" : ""}" data-action="tab" data-value="history">История</button>
+      <button class="${tab === "upcoming" ? "is-on" : ""}" data-action="tab" data-value="upcoming" aria-pressed="${tab === "upcoming"}">Предстоящие${up ? html`<span class="badge">${up}</span>` : ""}</button>
+      <button class="${tab === "history" ? "is-on" : ""}" data-action="tab" data-value="history" aria-pressed="${tab === "history"}">История</button>
     </div>`;
 }
 
-function paint(ctx, animate = true) {
-  render(ctx, html`
-    <h1 class="h-display" style="margin-bottom:16px">Мои заявки</h1>
-    <div id="tabs">${tabsMarkup()}</div>
-    <div id="list" style="margin-top:16px">${listMarkup()}</div>`, { animate });
-}
+const shell = (body) => html`<h1 class="title-xl">Заявки</h1>${body}`;
 
 async function load(ctx, { silent = false } = {}) {
   try {
-    const data = await api.myBookings();
-    bookings = data.bookings;
+    bookings = (await api.myBookings()).bookings;
     setActiveBookings(upcomingOf().length);
-    if (!ctx || ctx.isCurrent()) return true;
+    return !ctx || ctx.isCurrent();
   } catch (e) {
-    if (!silent && ctx && ctx.isCurrent()) {
-      render(ctx, html`<h1 class="h-display" style="margin-bottom:16px">Мои заявки</h1>${errorState(e.message)}`);
-    }
+    if (!silent && ctx && ctx.isCurrent()) render(ctx, shell(errorState(e.message)));
+    return false;
   }
-  return false;
 }
 
-/* ── Карточка заявки в шторке ───────────────────────────── */
+/* ── Заявка в шторке ────────────────────────────────────── */
 
 function detailsMarkup(b) {
-  const g = b.garage;
-  const location = [g.district, g.address].filter(Boolean).join(" · ");
   return html`
-    <div class="row-between" style="margin-bottom:14px">
-      <div class="h-title">Заявка №${b.id}</div>${statusPill(b.status)}
-    </div>
-    <div class="card pad stack">
-      <div class="row" style="gap:12px">${miniThumb(g.photo)}<div class="grow"><div style="font-weight:650">${g.name}</div><div class="muted" style="font-size:13.5px">${location}</div></div></div>
-      <div class="row-between" style="padding-top:12px;border-top:1px solid var(--border)">
-        <div><div class="faint" style="font-size:13px">${dayLong(b.date)}</div><div class="num" style="font-weight:700;font-size:17px">${span(b.start_hour, b.end_hour)} · ${hours(b.hours)}</div></div>
-        <div class="num" style="font-size:20px;font-weight:800">${money(b.total)}</div>
-      </div>
-    </div>
-    ${b.status === "rejected" && b.comment ? html`<div class="note warn" style="margin-top:12px">${icon("info")}<span><b>Причина отказа:</b> ${b.comment}</span></div>` : ""}
-    ${b.status === "pending" || b.status === "confirmed" ? html`<div class="card pad" style="margin-top:12px">${stepper(b.status)}</div>` : ""}
-    <div class="stack" style="margin-top:16px">
-      ${b.status === "confirmed" ? html`<button class="btn secondary block" data-action="route">${icon("route")}Маршрут</button>` : ""}
-      ${b.can_cancel ? html`<button class="btn danger block" data-action="askCancel">Отменить заявку</button>` : html`<button class="btn primary block" data-action="again">Забронировать снова</button>`}
-      <button class="btn ghost block" data-action="close">Закрыть</button>
+    <div class="between"><h2 class="title-m" style="margin:0">Заявка ${b.id}</h2>${statusLabel(b.status)}</div>
+    ${b.status === "rejected" && b.comment ? html`<p class="alert danger mt-m">Причина отказа: ${b.comment}</p>` : ""}
+    <div class="mt-l">${bookingProps(b)}</div>
+    ${b.status === "pending" || b.status === "confirmed" ? html`<div class="mt-xl">${stepper(b.status)}</div>` : ""}
+    <div class="stack mt-xl">
+      ${b.status === "confirmed" ? html`<button class="btn secondary l block" data-action="route">${icon("route")}Показать на карте</button>` : ""}
+      ${b.can_cancel
+        ? html`<button class="btn danger l block" data-action="askCancel">Отменить заявку</button>`
+        : html`<button class="btn primary l block" data-action="again">Забронировать снова</button>`}
     </div>`;
 }
 
 function openDetails(b) {
   let sheet;
-  const actions = {
-    route: () => openLink(mapUrl(b.garage)),
-    again: () => { sheet.close(); go(`/g/${b.garage.id}/book`); },
-    askCancel: () => {
-      haptic.medium();
-      sheet.update(html`
-        <div class="h-title" style="margin-bottom:6px">Отменить заявку?</div>
-        <p class="muted" style="margin-bottom:18px">${b.garage.name}, ${dayLong(b.date)}, ${span(b.start_hour, b.end_hour)}. Время освободится для других клиентов.</p>
-        <div class="stack">
-          <button class="btn danger block" data-action="doCancel">Да, отменить</button>
-          <button class="btn secondary block" data-action="keep">Нет, оставить</button>
-        </div>`);
+  sheet = openSheet(detailsMarkup(b), {
+    actions: {
+      route: () => openLink(mapUrl(b.garage)),
+      again: () => { sheet.close(); go(`/g/${b.garage.id}/book`); },
+      askCancel() {
+        haptic.medium();
+        sheet.update(html`
+          <h2 class="title-m">Отменить заявку?</h2>
+          <p class="muted">${b.garage.name}, ${dayLong(b.date)}, ${span(b.start_hour, b.end_hour)}. Время освободится для других.</p>
+          <div class="actions">
+            <button class="btn secondary l" data-action="keep">Не отменять</button>
+            <button class="btn danger l" data-action="doCancel">Отменить</button>
+          </div>`);
+      },
+      keep: () => sheet.update(detailsMarkup(b)),
+      async doCancel(el) {
+        el.classList.add("is-loading");
+        try {
+          await api.cancelBooking(b.id);
+          sheet.close();
+          toast("Заявка отменена");
+          await load(null, { silent: true });
+          patch("#tabs", tabsMarkup());
+          patch("#list", listMarkup());
+        } catch (e) {
+          el.classList.remove("is-loading");
+          toast(e.message, "err");
+        }
+      },
     },
-    keep: () => sheet.update(detailsMarkup(b)),
-    async doCancel(el) {
-      el.classList.add("is-loading");
-      try {
-        await api.cancelBooking(b.id);
-        sheet.close();
-        toast("Заявка отменена");
-        await load(null, { silent: true });
-        patch("#tabs", tabsMarkup());
-        patch("#list", listMarkup());
-      } catch (e) {
-        el.classList.remove("is-loading");
-        toast(e.message, "err");
-      }
-    },
-  };
-  sheet = openSheet(detailsMarkup(b), { actions });
+  });
 }
 
 async function enter(ctx) {
@@ -134,11 +117,12 @@ async function enter(ctx) {
     if (await load(ctx, { silent: true })) { patch("#tabs", tabsMarkup()); patch("#list", listMarkup()); }
     return;
   }
-  render(ctx, html`
-    <h1 class="h-display" style="margin-bottom:16px">Мои заявки</h1>
-    <div class="skeleton" style="height:42px"></div>
-    <div class="list" style="margin-top:16px">${[1, 2].map(() => html`<div class="skeleton" style="height:104px;border-radius:var(--r-lg)"></div>`)}</div>`);
-  if (await load(ctx)) paint(ctx, false);
+  render(ctx, shell(html`
+    <div class="skeleton mt-l" style="height:38px"></div>
+    <div class="mt-l">${[1, 2, 3].map(() => html`<div class="row" style="padding:14px 0"><div class="skeleton" style="width:64px;height:48px"></div><div class="grow"><div class="skeleton" style="height:16px;width:70%"></div><div class="skeleton mt-s" style="height:12px;width:50%"></div></div></div>`)}</div>`));
+  if (await load(ctx)) {
+    render(ctx, shell(html`<div class="mt-l" id="tabs">${tabsMarkup()}</div><div class="mt-s" id="list">${listMarkup()}</div>`), { animate: false });
+  }
 }
 
 export async function refreshBadge() {
