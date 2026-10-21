@@ -110,6 +110,20 @@ async def setup_commands(bot: Bot) -> None:
     await bot.set_my_commands(common_commands, scope=BotCommandScopeDefault())
 
 
+async def setup_profile(bot: Bot) -> None:
+    """Описание бота — то, что человек видит в пустом чате до нажатия кнопки запуска.
+    Меняем, только если текст отличается: у Telegram лимит на частоту таких запросов."""
+    try:
+        if (await bot.get_my_description()).description != t.BOT_DESCRIPTION:
+            await bot.set_my_description(t.BOT_DESCRIPTION)
+            log.info("Описание бота обновлено")
+        if (await bot.get_my_short_description()).short_description != t.BOT_SHORT_DESCRIPTION:
+            await bot.set_my_short_description(t.BOT_SHORT_DESCRIPTION)
+            log.info("Короткое описание бота обновлено")
+    except Exception as e:
+        log.warning("Не удалось обновить описание бота: %s", e)
+
+
 async def sync_menu_button(bot: Bot) -> None:
     """Кнопка «Открыть» слева от поля ввода всегда ведёт на текущий адрес приложения.
     Адрес туннеля может смениться — проверяем раз в 30 секунд. Нет адреса — убираем кнопку."""
@@ -149,6 +163,7 @@ async def main() -> None:
     dp = build_dispatcher()
     me = await bot.get_me()
     await setup_commands(bot)
+    await setup_profile(bot)
     reminder_task = asyncio.create_task(reminders.run(bot))
     menu_task = asyncio.create_task(sync_menu_button(bot))
     web_runner = None

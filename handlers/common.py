@@ -24,13 +24,13 @@ log = logging.getLogger(__name__)
 router = Router(name="common")
 
 
-async def show_home(message: Message, user_id: int, state: FSMContext) -> None:
+async def show_home(message: Message, user_id: int, state: FSMContext, first_name: str = "") -> None:
     await reset(state)
     if admin_view(user_id):
         await show_dashboard(message)
         return
     sent = await message.answer_photo(
-        photo=media.image("cover"), caption=t.START + (t.APP_HINT if webapp_url() else ""), reply_markup=kb.user_menu(),
+        photo=media.image("cover"), caption=t.start_text(first_name) + (t.APP_HINT if webapp_url() else ""), reply_markup=kb.user_menu(),
     )
     media.remember("cover", sent)
 
@@ -55,7 +55,7 @@ async def show_dashboard(message: Message) -> None:
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
-    await show_home(message, message.from_user.id, state)
+    await show_home(message, message.from_user.id, state, message.from_user.first_name)
 
 
 @router.message(Command("app"))
