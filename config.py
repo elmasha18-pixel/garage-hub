@@ -39,3 +39,14 @@ ADMIN_REMIND_AFTER_MIN = 15      # заявка висит без ответа �
 CLIENT_WAIT_NOTICE_MIN = 60      # клиенту: «заявка ещё на согласовании»
 VISIT_REMIND_BEFORE_MIN = 120    # клиенту: «через 2 часа ждём вас»
 REMINDER_INTERVAL_SEC = 60
+
+# ─── Mini App (веб-интерфейс) ────────────────────────────────
+WEBAPP_DIR = BASE_DIR / "webapp"
+CACHE_DIR = BASE_DIR / "cache"
+WEB_HOST = os.getenv("WEB_HOST", "127.0.0.1")
+WEB_PORT = int(os.getenv("WEB_PORT", "8080"))
+# Публичный HTTPS-адрес Mini App (нужен Telegram). Пусто — приложение в боте не показывается.
+WEBAPP_URL = (os.getenv("WEBAPP_URL") or "").strip().rstrip("/")
+# Режим разработки: вход без Telegram, только с локального адреса. На сервере НЕ включать.
+MINIAPP_DEV = os.getenv("MINIAPP_DEV", "").lower() in ("1", "true", "yes")
+INIT_DATA_MAX_AGE_SEC = 24 * 3600
