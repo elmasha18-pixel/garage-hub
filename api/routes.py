@@ -63,6 +63,9 @@ async def auth_middleware(request: web.Request, handler):
     if path.startswith("/api/") and not is_public(request):
         user = authenticate(request)
         if not user:
+            header = request.headers.get("Authorization", "")
+            why = "нет данных Telegram" if not header else "подпись Telegram не прошла проверку" if header.startswith("tma ") else "чужой формат входа"
+            log.warning("вход не удался: %s (%s %s)", why, request.method, path)
             return error_response("unauthorized", "Откройте приложение через Telegram.", 401)
         request["user"] = user
         if path.startswith("/api/admin/") and not user.is_admin:
@@ -70,9 +73,26 @@ async def auth_middleware(request: web.Request, handler):
     return await handler(request)
 
 
+def _device(request: web.Request) -> str:
+    ua = request.headers.get("User-Agent", "")
+    for marker, name in (("iPhone", "iPhone"), ("iPad", "iPad"), ("Android", "Android"),
+                         ("Macintosh", "Mac"), ("Windows", "Windows"), ("Linux", "Linux")):
+        if marker in ua:
+            return name
+    return "неизвестно"
+
+
 @web.middleware
 async def headers_middleware(request: web.Request, handler):
-    response = await handler(request)
+    try:
+        response = await handler(request)
+    except web.HTTPException as e:
+        if request.path == "/" or request.path.startswith("/api/") and not request.path.startswith("/api/photo/"):
+            log.info("запрос %s %s → %s (%s)", request.method, request.path, e.status, _device(request))
+        raise
+    # Журнал открытий: страница и API (без фото и статики) — чтобы видеть, доходят ли люди до приложения
+    if request.path == "/" or (request.path.startswith("/api/") and not request.path.startswith("/api/photo/")):
+        log.info("запрос %s %s → %s (%s)", request.method, request.path, response.status, _device(request))
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
     if request.path.startswith("/api/") and not request.path.startswith("/api/photo/"):
