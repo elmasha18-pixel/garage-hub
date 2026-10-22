@@ -15,6 +15,7 @@ from aiogram.types import (
     MenuButtonWebApp, WebAppInfo,
 )
 
+from tgbot import keyboards as kb
 from tgbot import reminders
 from tgbot import texts as t
 from api.server import start_web
@@ -109,6 +110,13 @@ async def setup_commands(bot: Bot) -> None:
         BotCommand(command="app", description="Открыть приложение"),
     ]
     await bot.set_my_commands(common_commands, scope=BotCommandScopeDefault())
+    await bot.set_my_commands(
+        common_commands + [
+            BotCommand(command="admin", description="Панель управления"),
+            BotCommand(command="client", description="Посмотреть глазами клиента"),
+        ],
+        scope=BotCommandScopeChat(chat_id=ADMIN_ID),
+    )
 
 
 async def setup_profile(bot: Bot) -> None:
@@ -127,8 +135,12 @@ async def setup_profile(bot: Bot) -> None:
 
 async def sync_menu_button(bot: Bot) -> None:
     """Кнопка «Открыть» слева от поля ввода всегда ведёт на текущий адрес приложения.
-    Адрес туннеля может смениться — проверяем раз в 30 секунд. Нет адреса — убираем кнопку."""
+    Адрес туннеля может смениться — проверяем раз в 30 секунд. Нет адреса — убираем кнопку.
+
+    Telegram на телефоне держит старую кнопку, пока чат не переоткроют, поэтому при каждой смене
+    адреса админу приходит свежая кнопка «Открыть приложение», а прошлая такая же удаляется."""
     current = None
+    admin_message_id = None
     while True:
         url = webapp_url()
         if url != current:
@@ -144,14 +156,25 @@ async def sync_menu_button(bot: Bot) -> None:
                 current = url
             except Exception as e:
                 log.warning("Не удалось обновить кнопку приложения: %s", e)
+            admin_message_id = await refresh_admin_button(bot, admin_message_id)
         await asyncio.sleep(30)
-    await bot.set_my_commands(
-        common_commands + [
-            BotCommand(command="admin", description="Панель управления"),
-            BotCommand(command="client", description="Посмотреть глазами клиента"),
-        ],
-        scope=BotCommandScopeChat(chat_id=ADMIN_ID),
-    )
+
+
+async def refresh_admin_button(bot: Bot, previous_id):
+    if previous_id:
+        try:
+            await bot.delete_message(ADMIN_ID, previous_id)
+        except Exception:
+            pass
+    markup = kb.open_app()
+    if not markup:
+        return None
+    try:
+        sent = await bot.send_message(ADMIN_ID, t.APP_LINK_UPDATED, reply_markup=markup, disable_notification=True)
+        return sent.message_id
+    except Exception as e:
+        log.warning("Не удалось прислать админу кнопку приложения: %s", e)
+        return None
 
 
 async def main() -> None:
