@@ -4,6 +4,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 os.environ["MINIAPP_DEV"] = "1"
+os.environ["EXTRA_ADMIN_IDS"] = "900000002"   # второй админ для проверки
 logging.basicConfig(level=logging.ERROR)
 import harness
 harness.VERBOSE = False
@@ -64,6 +65,8 @@ async def main():
         check("клиент не админ", r.status == 200 and me["is_admin"] is False)
         r = await c.get("/api/admin/summary", headers=dev(CLIENT)); check("клиенту админка закрыта → 403", r.status == 403)
         r = await c.get("/api/admin/summary", headers=dev(ADMIN)); check("админу открыта", r.status == 200)
+        r = await c.get("/api/admin/summary", headers=dev(900000002)); check("второму админу (EXTRA_ADMIN_IDS) открыта", r.status == 200)
+        r = await c.get("/api/me", headers=dev(900000002)); check("второй админ видит себя админом", (await r.json())["is_admin"] is True)
 
         print("Каталог")
         r = await c.get("/api/garages", headers=dev(CLIENT)); raw = await r.text()

@@ -15,11 +15,12 @@ from aiogram.types import (
     MenuButtonWebApp, WebAppInfo,
 )
 
+from core import service
 from tgbot import keyboards as kb
 from tgbot import reminders
 from tgbot import texts as t
 from api.server import start_web
-from core.config import ADMIN_ID, LOGS_DIR, TOKEN, WEB_PORT, supabase, webapp_url
+from core.config import ADMIN_IDS, LOGS_DIR, TOKEN, WEB_PORT, supabase, webapp_url
 from tgbot.handlers import admin_bookings, admin_objects, booking, common, owners, search
 
 log = logging.getLogger("garagehub")
@@ -84,7 +85,7 @@ async def on_error(event: ErrorEvent) -> bool:
     if message and (_last_error_report is None or time.monotonic() - _last_error_report > 60):
         _last_error_report = time.monotonic()
         try:
-            await message.bot.send_message(ADMIN_ID, t.error_for_admin(where, error))
+            await service.notify_admins(message.bot, t.error_for_admin(where, error))
         except Exception:
             pass
     return True
@@ -110,13 +111,17 @@ async def setup_commands(bot: Bot) -> None:
         BotCommand(command="app", description="Открыть приложение"),
     ]
     await bot.set_my_commands(common_commands, scope=BotCommandScopeDefault())
-    await bot.set_my_commands(
-        common_commands + [
-            BotCommand(command="admin", description="Панель управления"),
-            BotCommand(command="client", description="Посмотреть глазами клиента"),
-        ],
-        scope=BotCommandScopeChat(chat_id=ADMIN_ID),
-    )
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.set_my_commands(
+                common_commands + [
+                    BotCommand(command="admin", description="Панель управления"),
+                    BotCommand(command="client", description="Посмотреть глазами клиента"),
+                ],
+                scope=BotCommandScopeChat(chat_id=admin_id),
+            )
+        except Exception as e:   # админ ещё ни разу не писал боту
+            log.warning("Команды админа %s не выставлены: %s", admin_id, e)
 
 
 async def setup_profile(bot: Bot) -> None:
@@ -140,7 +145,7 @@ async def sync_menu_button(bot: Bot) -> None:
     Telegram на телефоне держит старую кнопку, пока чат не переоткроют, поэтому при каждой смене
     адреса админу приходит свежая кнопка «Открыть приложение», а прошлая такая же удаляется."""
     current = None
-    admin_message_id = None
+    admin_messages = {}
     while True:
         url = webapp_url()
         if url != current:
@@ -156,24 +161,25 @@ async def sync_menu_button(bot: Bot) -> None:
                 current = url
             except Exception as e:
                 log.warning("Не удалось обновить кнопку приложения: %s", e)
-            admin_message_id = await refresh_admin_button(bot, admin_message_id)
+            for admin_id in ADMIN_IDS:
+                admin_messages[admin_id] = await refresh_admin_button(bot, admin_id, admin_messages.get(admin_id))
         await asyncio.sleep(30)
 
 
-async def refresh_admin_button(bot: Bot, previous_id):
+async def refresh_admin_button(bot: Bot, admin_id: int, previous_id):
     if previous_id:
         try:
-            await bot.delete_message(ADMIN_ID, previous_id)
+            await bot.delete_message(admin_id, previous_id)
         except Exception:
             pass
     markup = kb.open_app()
     if not markup:
         return None
     try:
-        sent = await bot.send_message(ADMIN_ID, t.APP_LINK_UPDATED, reply_markup=markup, disable_notification=True)
+        sent = await bot.send_message(admin_id, t.APP_LINK_UPDATED, reply_markup=markup, disable_notification=True)
         return sent.message_id
     except Exception as e:
-        log.warning("Не удалось прислать админу кнопку приложения: %s", e)
+        log.warning("Не удалось прислать админу %s кнопку приложения: %s", admin_id, e)
         return None
 
 

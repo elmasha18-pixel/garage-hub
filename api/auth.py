@@ -13,7 +13,7 @@ from urllib.parse import parse_qsl
 
 from aiohttp import web
 
-from core.config import ADMIN_ID, INIT_DATA_MAX_AGE_SEC, MINIAPP_DEV, TOKEN
+from core.config import ADMIN_ID, ADMIN_IDS, INIT_DATA_MAX_AGE_SEC, MINIAPP_DEV, TOKEN
 
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "[::1]"}
 PROXY_HEADERS = ("X-Forwarded-For", "X-Forwarded-Host", "Forwarded", "Cf-Connecting-Ip", "X-Real-Ip")
@@ -30,7 +30,7 @@ class User:
 
     @property
     def is_admin(self) -> bool:
-        return self.id == ADMIN_ID
+        return self.id in ADMIN_IDS
 
     @property
     def name(self) -> str:

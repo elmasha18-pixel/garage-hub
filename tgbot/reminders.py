@@ -12,11 +12,11 @@ from datetime import timedelta
 
 from aiogram import Bot
 
-from core import db
+from core import db, service
 from tgbot import keyboards as kb
 from tgbot import texts as t
 from core.config import (
-    ADMIN_ID, ADMIN_REMIND_AFTER_MIN, CLIENT_WAIT_NOTICE_MIN, REMINDER_INTERVAL_SEC,
+    ADMIN_REMIND_AFTER_MIN, CLIENT_WAIT_NOTICE_MIN, REMINDER_INTERVAL_SEC,
     VISIT_REMIND_BEFORE_MIN,
 )
 from core.utils import now, parse_dt
@@ -38,7 +38,7 @@ async def tick(bot: Bot) -> None:
         await db.mark_booking(b["id"], "admin_reminded")
         g = await db.garage(b["garage_id"]) or {}
         start, end = parse_dt(b["start_time"]), parse_dt(b["end_time"])
-        await _send(bot, ADMIN_ID, t.admin_reminder(b, g.get("name") or "—", start, end), kb.decide(b["id"]))
+        await service.notify_admins(bot, t.admin_reminder(b, g.get("name") or "—", start, end), kb.decide(b["id"]))
 
     for b in await db.stale_pending(current - timedelta(minutes=CLIENT_WAIT_NOTICE_MIN), "client_wait_notified"):
         await db.mark_booking(b["id"], "client_wait_notified")

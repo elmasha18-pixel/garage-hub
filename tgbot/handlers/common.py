@@ -58,6 +58,12 @@ async def cmd_start(message: Message, state: FSMContext):
     await show_home(message, message.from_user.id, state, message.from_user.first_name)
 
 
+@router.message(Command("id"))
+async def cmd_id(message: Message):
+    """Показывает человеку его Telegram ID — нужен, чтобы выдать права админа."""
+    await message.answer(t.your_id(message.from_user.id))
+
+
 @router.message(Command("app"))
 async def cmd_app(message: Message):
     markup = kb.open_app()

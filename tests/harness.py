@@ -13,6 +13,7 @@ from aiogram.enums import ParseMode
 from aiogram.types import Chat, InlineKeyboardMarkup, Message, PhotoSize, User
 
 from tgbot import app
+from core.config import ADMIN_ID
 
 _ids = itertools.count(5000)
 _upd = itertools.count(1)
@@ -60,7 +61,7 @@ class FakeSession(BaseSession):
     def out(self, kind, chat_id, text, markup):
         self.log.append((kind, chat_id, text, markup))
         if VERBOSE:
-            who = "ADMIN" if chat_id == app.ADMIN_ID else f"user{chat_id}"
+            who = "ADMIN" if chat_id == ADMIN_ID else f"user{chat_id}"
             print(f"\n→ {who} {kind}\n{text or ''}\n{fmt_markup(markup)}".rstrip())
 
     async def make_request(self, bot, method, timeout=None):

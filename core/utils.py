@@ -8,7 +8,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import BaseFilter
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
-from core.config import ADMIN_ID, DEFAULT_CLOSE_HOUR, DEFAULT_OPEN_HOUR, LOCAL_TZ
+from core.config import ADMIN_IDS, DEFAULT_CLOSE_HOUR, DEFAULT_OPEN_HOUR, LOCAL_TZ
 
 
 # ─── Роли ────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ _client_view: Set[int] = set()
 
 
 def is_admin(user_id: int) -> bool:
-    return user_id == ADMIN_ID
+    return user_id in ADMIN_IDS
 
 
 def admin_view(user_id: int) -> bool:

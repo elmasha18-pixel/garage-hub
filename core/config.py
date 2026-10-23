@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -12,7 +13,10 @@ load_dotenv(BASE_DIR / ".env")
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SECRET_KEY")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "5121580545"))
+ADMIN_ID = int(os.getenv("ADMIN_ID", "5121580545"))   # главный админ (владелец проекта)
+# Дополнительные админы с теми же правами: EXTRA_ADMIN_IDS=111,222 в .env. ID узнать командой /id в боте.
+EXTRA_ADMIN_IDS = [int(x) for x in re.split(r"[,\s]+", os.getenv("EXTRA_ADMIN_IDS", "")) if x.strip().isdigit()]
+ADMIN_IDS = [ADMIN_ID] + [x for x in EXTRA_ADMIN_IDS if x != ADMIN_ID]
 ADMIN_TG = os.getenv("ADMIN_TG", "@mamedov99999")
 ADMIN_PHONE = os.getenv("ADMIN_PHONE", "+7 (999) 462-47-30")
 

@@ -12,7 +12,7 @@ from aiogram import Bot
 from core import db
 from tgbot import keyboards as kb
 from tgbot import texts as t
-from core.config import ADMIN_ID, BOOKING_WINDOW_DAYS
+from core.config import ADMIN_IDS, BOOKING_WINDOW_DAYS
 from core.utils import (
     at_hour, busy_hours, garage_hours, now, parse_dt, past_hours, user_lock,
 )
@@ -30,6 +30,20 @@ class ServiceError(Exception):
         self.code = code
         self.message = message
         self.status = status
+
+
+# ─── Уведомления админам ────────────────────────────────────
+
+async def notify_admins(bot: Bot, text: str, markup=None, **kwargs) -> int:
+    """Отправляет сообщение всем админам. Возвращает, скольким дошло (один недоступный не мешает остальным)."""
+    delivered = 0
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_message(admin_id, text, reply_markup=markup, **kwargs)
+            delivered += 1
+        except Exception as e:
+            log.warning("Админу %s сообщение не дошло: %s", admin_id, e)
+    return delivered
 
 
 # ─── Свободное время ────────────────────────────────────────
@@ -126,14 +140,10 @@ async def create_booking_request(bot: Bot, user_id: int, username: Optional[str]
     if not created:
         raise ServiceError("save_failed", "Не удалось отправить заявку. Попробуйте ещё раз.", 500)
 
-    try:
-        await bot.send_message(
-            ADMIN_ID,
-            t.admin_booking_card(created, g, start, end, None, now(), title="Новая заявка"),
-            reply_markup=kb.decide(created["id"]),
-        )
-    except Exception:
-        log.exception("Заявка №%s создана, но не дошла до админа", created["id"])
+    if not await notify_admins(
+        bot, t.admin_booking_card(created, g, start, end, None, now(), title="Новая заявка"), kb.decide(created["id"]),
+    ):
+        log.error("Заявка №%s создана, но не дошла ни до одного админа", created["id"])
     return created, g
 
 
@@ -194,12 +204,7 @@ async def cancel_booking(bot: Bot, user_id: int, booking_id: int) -> dict:
         raise ServiceError("changed", "Статус заявки уже изменился.", 409)
     g = await db.garage(b["garage_id"])
     start, end = parse_dt(b["start_time"]), parse_dt(b["end_time"])
-    try:
-        await bot.send_message(
-            ADMIN_ID, t.client_cancelled_for_admin(updated, (g or {}).get("name") or "—", start, end),
-        )
-    except Exception:
-        log.exception("Не удалось уведомить админа об отмене №%s", booking_id)
+    await notify_admins(bot, t.client_cancelled_for_admin(updated, (g or {}).get("name") or "—", start, end))
     return updated
 
 
@@ -220,8 +225,4 @@ async def create_owner_request(bot: Bot, user_id: int, username: Optional[str], 
         saved = await db.create_owner_request(lead)
     except Exception:
         log.exception("Не удалось сохранить заявку владельца")
-    await bot.send_message(
-        ADMIN_ID,
-        t.owner_lead(saved or {**lead, "id": "—"}),
-        reply_markup=kb.lead_actions(saved["id"]) if saved else None,
-    )
+    await notify_admins(bot, t.owner_lead(saved or {**lead, "id": "—"}), kb.lead_actions(saved["id"]) if saved else None)
