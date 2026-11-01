@@ -7,3 +7,15 @@ Icon?
 logs/
 cache/
 *.log
+
+# Секреты и локальные данные (не публиковать)
+.env.*
+!.env.example
+*.sqlite
+*.sqlite3
+*.db
+*.pem
+*.key
+# Редакторы
+.vscode/
+.idea/
